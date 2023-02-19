@@ -27,7 +27,7 @@ import hashlib
 
 root = Tk()
 #root.attributes("-alpha", 0.8)
-ver = "1.4"
+ver = "1.3"
 title='安全教育平台助手 - 学生版 '+ver
 root.title(title)
 tmp = open("xueanquan.ico","wb+")
@@ -71,13 +71,11 @@ class myStdout():	# 重定向类
         sys.stdout = self.stdoutbak
         sys.stderr = self.stderrbak
 
-def download(name, url, header={"Connection": "keep-alive",'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36'}, interval=0.5):
-    t.config(state=NORMAL)
-    t.delete("2.0","end")
+def download(name, url, header={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36'}, interval=0.5):
     def MB(byte):
         return byte / 1024 / 1024
     #print(name)
-    res = requests.get(url, stream=True,headers=header)
+    res = requests.get(url,stream=True,headers=header)
     file_size = int(res.headers['content-length'])  # 文件大小 Byte
     f = open(name, 'wb')
     down_size = 0  # 已下载字节数
@@ -97,12 +95,15 @@ def download(name, url, header={"Connection": "keep-alive",'User-Agent': 'Mozill
                 done = int(50 * down_size / file_size)
                 sys.stdout.write("\r[%s%s] %d%%" % ('>' * done, ' ' * (50 - done), 100 * down_size / file_size))
                 sys.stdout.flush()
+                t.config(state=NORMAL)
+                #t.delete("2.0","end")
                 t.insert("end", '\n'+'\r{:.1f}MB/s -已下载 {:.1f}MB，共 {:.1f}MB 已下载百分之:{:.2%} 还剩 {:.0f} 秒   '.format(*print_params))
                 t.update()
                 t.see(tkinter.END)
+                #t.delete("2.0","end")
                 #print('\r{:.1f}MB/s -已下载 {:.1f}MB，共 {:.1f}MB 已下载百分之:{:.2%} 还剩 {:.0f} 秒   '.format(*print_params))
     f.close()
-    t.config(state=DISABLED)
+    #t.config(state=DISABLED)
 
 def login(username, password):
     '''
@@ -593,7 +594,7 @@ def startmain():
 
 def update():
     try:
-        html = requests.get("https://file-fatdeadpanda.netlify.app/updatalog.html")
+        html = requests.get("https://file-fatdeadpanda.netlify.app/stuupdatalog")
     except:
         tkinter.messagebox.showerror(title='失败',message='网络连接失败，请检查网络环境后再试')
         return 0
@@ -613,7 +614,11 @@ def update():
         #with open("./version-"+b +".exe","wb+") as code:
         #    code.write(a2.content)
         path="./version-"+b +".exe"
+        t.config(state=NORMAL)
+        t.insert("end", "开始下载更新")
         download(path, Download_a1)
+        t.delete("2.0","end")
+        t.config(state=DISABLED)
         with open("./version-"+b +".exe","rb") as hashjiaoyan:
             bytes = hashjiaoyan.read() # read file as bytes
             readable_hash = hashlib.md5(bytes).hexdigest();
