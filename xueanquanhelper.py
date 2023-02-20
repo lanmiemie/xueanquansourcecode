@@ -27,7 +27,7 @@ import hashlib
 
 root = Tk()
 #root.attributes("-alpha", 0.8)
-ver = "1.3"
+ver = "1.4"
 title='安全教育平台助手 - 学生版 '+ver
 root.title(title)
 tmp = open("xueanquan.ico","wb+")
@@ -96,14 +96,14 @@ def download(name, url, header={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win
                 sys.stdout.write("\r[%s%s] %d%%" % ('>' * done, ' ' * (50 - done), 100 * down_size / file_size))
                 sys.stdout.flush()
                 t.config(state=NORMAL)
-                #t.delete("2.0","end")
+                t.delete("2.0","end")
                 t.insert("end", '\n'+'\r{:.1f}MB/s -已下载 {:.1f}MB，共 {:.1f}MB 已下载百分之:{:.2%} 还剩 {:.0f} 秒   '.format(*print_params))
                 t.update()
                 t.see(tkinter.END)
-                #t.delete("2.0","end")
+                t.delete("2.0","end")
                 #print('\r{:.1f}MB/s -已下载 {:.1f}MB，共 {:.1f}MB 已下载百分之:{:.2%} 还剩 {:.0f} 秒   '.format(*print_params))
     f.close()
-    #t.config(state=DISABLED)
+    t.config(state=DISABLED)
 
 def login(username, password):
     '''
@@ -614,11 +614,14 @@ def update():
         #with open("./version-"+b +".exe","wb+") as code:
         #    code.write(a2.content)
         path="./version-"+b +".exe"
-        t.config(state=NORMAL)
-        t.insert("end", "开始下载更新")
-        download(path, Download_a1)
-        t.delete("2.0","end")
-        t.config(state=DISABLED)
+        #t.config(state=NORMAL)
+        #t.insert("end", "开始下载更新")
+        try:
+            download(path, Download_a1)
+        except:
+            tkinter.messagebox.showerror(title='下载失败',message='未知错误，请再试一次')
+        #t.delete("2.0","end")
+        #t.config(state=DISABLED)
         with open("./version-"+b +".exe","rb") as hashjiaoyan:
             bytes = hashjiaoyan.read() # read file as bytes
             readable_hash = hashlib.md5(bytes).hexdigest();
