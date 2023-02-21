@@ -27,7 +27,7 @@ import hashlib
 
 root = Tk()
 #root.attributes("-alpha", 0.8)
-ver = "1.4"
+ver = "1.4.1"
 title='安全教育平台助手 - 学生版 '+ver
 root.title(title)
 tmp = open("xueanquan.ico","wb+")
@@ -71,12 +71,16 @@ class myStdout():	# 重定向类
         sys.stdout = self.stdoutbak
         sys.stderr = self.stderrbak
 
-def download(name, url, header={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36'}, interval=0.5):
+def download(name, url, header={'Connection': 'keep-alive','Accept-Encoding': 'gzip, deflate, br','User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36'}, interval=0.5):
     def MB(byte):
         return byte / 1024 / 1024
     #print(name)
     res = requests.get(url,stream=True,headers=header)
-    file_size = int(res.headers['content-length'])  # 文件大小 Byte
+    try:
+        file_size = int(res.headers['content-length'])  # 文件大小 Byte
+    except Exception as e:
+        tkinter.messagebox.showerror(title='下载失败',message='未知错误，请再试一次')
+        pass
     f = open(name, 'wb')
     down_size = 0  # 已下载字节数
     old_down_size = 0  # 上一次已下载字节数
@@ -93,8 +97,8 @@ def download(name, url, header={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win
                 time_ = time.time()
                 print_params = [MB(speed), MB(down_size), MB(file_size), down_size / file_size, (file_size - down_size) / speed]
                 done = int(50 * down_size / file_size)
-                sys.stdout.write("\r[%s%s] %d%%" % ('>' * done, ' ' * (50 - done), 100 * down_size / file_size))
-                sys.stdout.flush()
+                #sys.stdout.write("\r[%s%s] %d%%" % ('>' * done, ' ' * (50 - done), 100 * down_size / file_size))
+                #sys.stdout.flush()
                 t.config(state=NORMAL)
                 t.delete("2.0","end")
                 t.insert("end", '\n'+'\r{:.1f}MB/s -已下载 {:.1f}MB，共 {:.1f}MB 已下载百分之:{:.2%} 还剩 {:.0f} 秒   '.format(*print_params))
@@ -469,6 +473,7 @@ def do_holiday(userid, schoolYear, semester, step):
 def main(username, password):
 
     num = 1
+    error = 0
     #global t
     # 登陆账号，获取信息
     accesstoken, serverside, userid, name, plainUserId = login(
@@ -541,7 +546,6 @@ def main(username, password):
                 else:
                     # 获取id
                     # 完成专题任务
-                    # print('😭sorry,此功能正在开发。z z z z z z')
 
                     id_all = get_special(url, userid)
                     specialId = id_all
@@ -616,10 +620,10 @@ def update():
         path="./version-"+b +".exe"
         #t.config(state=NORMAL)
         #t.insert("end", "开始下载更新")
-        try:
-            download(path, Download_a1)
-        except:
-            tkinter.messagebox.showerror(title='下载失败',message='未知错误，请再试一次')
+        #try:
+        download(path, Download_a1)
+        #except:
+        #    tkinter.messagebox.showerror(title='下载失败',message='未知错误，请再试一次')
         #t.delete("2.0","end")
         #t.config(state=DISABLED)
         with open("./version-"+b +".exe","rb") as hashjiaoyan:
