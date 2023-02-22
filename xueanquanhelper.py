@@ -75,12 +75,16 @@ def download(name, url, header={'Connection': 'keep-alive','Accept-Encoding': 'g
     def MB(byte):
         return byte / 1024 / 1024
     #print(name)
-    res = requests.get(url,stream=True,headers=header)
+    try:
+        res = requests.get(url,stream=True,headers=header)
+    except Exception as e:
+        tkinter.messagebox.showerror(title='下载失败',message='连接到远程服务器失败，请再试一次')
+        return 0
     try:
         file_size = int(res.headers['content-length'])  # 文件大小 Byte
     except Exception as e:
         tkinter.messagebox.showerror(title='下载失败',message='未知错误，请再试一次')
-        pass
+        return 0
     f = open(name, 'wb')
     down_size = 0  # 已下载字节数
     old_down_size = 0  # 上一次已下载字节数
@@ -620,9 +624,11 @@ def update():
         path="./version-"+b +".exe"
         #t.config(state=NORMAL)
         #t.insert("end", "开始下载更新")
-        #try:
-        download(path, Download_a1)
-        #except:
+        try:
+            download(path, Download_a1)
+        except Exception as e:
+            tkinter.messagebox.showerror(title='下载失败',message='连接到远程服务器失败，请再试一次')
+            return 0
         #    tkinter.messagebox.showerror(title='下载失败',message='未知错误，请再试一次')
         #t.delete("2.0","end")
         #t.config(state=DISABLED)
