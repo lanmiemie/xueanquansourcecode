@@ -407,10 +407,10 @@
    'c:\\program files\\python38\\lib\\http\\cookiejar.py',
    'PYMODULE'),
   ('_py_abc', 'c:\\program files\\python38\\lib\\_py_abc.py', 'PYMODULE'),
+  ('stringprep', 'c:\\program files\\python38\\lib\\stringprep.py', 'PYMODULE'),
   ('tracemalloc',
    'c:\\program files\\python38\\lib\\tracemalloc.py',
    'PYMODULE'),
-  ('stringprep', 'c:\\program files\\python38\\lib\\stringprep.py', 'PYMODULE'),
   ('hashlib', 'c:\\program files\\python38\\lib\\hashlib.py', 'PYMODULE'),
   ('fake_useragent',
    'c:\\program '

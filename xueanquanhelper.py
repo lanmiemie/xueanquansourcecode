@@ -600,7 +600,7 @@ def startmain():
             mystd.restoreStd()
             root.title(title)
 
-def update():
+def updataprogram():
     try:
         html = requests.get("https://file-fatdeadpanda.netlify.app/stuupdatalog")
     except:
@@ -648,7 +648,7 @@ def update():
     else:
         tkinter.messagebox.showinfo(title='提示', message="你已是最新版本")
 
-main_menu.add_command (label="检查更新", command = update)
+main_menu.add_command (label="检查更新", command = updataprogram)
 
 def about():
     top = Toplevel()
@@ -718,6 +718,23 @@ def about():
     
 main_menu.add_command (label="关于作者", command = about)
 
+def in_start():
+    root.title('开始检测网络连通性...')
+    try:
+        html = requests.get("https://guangdong.xueanquan.com")
+    except:
+        tkinter.messagebox.showerror(title='失败',message='网络连接失败，请检查网络环境后再试')
+        os._exit ()
+    root.title('开始检测最新版本...')
+    try:
+        updataprogram()
+    except:
+        root.title(title)
+        tkinter.messagebox.showerror(title='失败',message='无法检测最新版本')
+        return 0
+    root.title(title)
+    
+
 lf1 = tkinter.ttk.LabelFrame(root,text="登录信息")
 lf1.place(x=8, y=8,width=330,height=150)
 Label(lf1, text="学生账号").place(x=40,y=30)
@@ -734,5 +751,6 @@ t.tag_config("tag_blue", foreground="blue")
 t.tag_config("tag_red", foreground="red")
 t.tag_config("tag_yellow", backgroun="green", foreground="yellow")
 t.insert('end', 'LOG输出\n', "tag_blue")
+in_start()
 t.config(state=DISABLED)
 root.mainloop()
