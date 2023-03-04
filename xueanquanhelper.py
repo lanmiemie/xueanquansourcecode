@@ -20,14 +20,14 @@ import tkinter.filedialog
 import ctypes
 import random
 #import threading
-#import logging
+import logging
 from tkinter import scrolledtext
 from fake_useragent import FakeUserAgent
 import hashlib
 
 root = Tk()
 #root.attributes("-alpha", 0.8)
-ver = "1.4.1"
+ver = "1.4.5"
 title='安全教育平台助手 - 学生版 '+ver
 root.title(title)
 tmp = open("xueanquan.ico","wb+")
@@ -47,6 +47,9 @@ y = int((screenHeight - winHeight) / 2)
 root.geometry("%sx%s+%s+%s" % (winWidth, winHeight, x, y))
 root.resizable(0,0)
 port = StringVar()
+
+errorcodehas = 0
+
 
 main_menu = Menu(root)
 root.config (menu=main_menu)
@@ -71,7 +74,7 @@ class myStdout():	# 重定向类
         sys.stdout = self.stdoutbak
         sys.stderr = self.stderrbak
 
-def download(name, url, header={'Connection': 'keep-alive','Accept-Encoding': 'gzip, deflate, br','User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36'}, interval=0.5):
+def download(name, url, header={'Connection': 'keep-alive','User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36'}, interval=0.5):
     def MB(byte):
         return byte / 1024 / 1024
     #print(name)
@@ -83,7 +86,7 @@ def download(name, url, header={'Connection': 'keep-alive','Accept-Encoding': 'g
     try:
         file_size = int(res.headers['content-length'])  # 文件大小 Byte
     except Exception as e:
-        tkinter.messagebox.showerror(title='下载失败',message='未知错误，请再试一次')
+        tkinter.messagebox.showerror(title='下载失败',message='无法获取文件大小，请再试一次')
         return 0
     f = open(name, 'wb')
     down_size = 0  # 已下载字节数
@@ -96,9 +99,9 @@ def download(name, url, header={'Connection': 'keep-alive','Accept-Encoding': 'g
             if time.time() - time_ > interval:
                 #rate = down_size / file_size * 100  # 进度  0.01%
                 speed = (down_size - old_down_size) / interval  # 速率 0.01B/s
-                
                 old_down_size = down_size
                 time_ = time.time()
+                global print_params
                 print_params = [MB(speed), MB(down_size), MB(file_size), down_size / file_size, (file_size - down_size) / speed]
                 done = int(50 * down_size / file_size)
                 #sys.stdout.write("\r[%s%s] %d%%" % ('>' * done, ' ' * (50 - done), 100 * down_size / file_size))
@@ -199,6 +202,7 @@ def do_message(accesstoken, userid, messageId, num):
     '''
     阅读提醒,messageId以实现自动取更换
     '''
+    global errorcodehas
     try:
         cookies = 'ServerSide=https://guangdong.xueanquan.com/;' + 'UserID=' + userid
         Authorization = 'Bearer ' + accesstoken
@@ -226,6 +230,7 @@ def do_message(accesstoken, userid, messageId, num):
             num = num + 1
             do_message(userid, specialId, step, num)
         else:
+            errorcodehas = errorcodehas + 1
             pass
 
 
@@ -262,6 +267,7 @@ def do_homework(courseid, gradeid, userid, num):
     '''
     学期安全任务
     '''
+    global errorcodehas
     try:
         print(courseid, gradeid)
         cookies = 'ServerSide=https://guangdong.xueanquan.com/;' + 'UserID=' + userid
@@ -360,6 +366,7 @@ def do_homework(courseid, gradeid, userid, num):
             num = num + 1
             doit_course(courseid, gradeid, cookies, num)
         else:
+            errorcodehas = errorcodehas + 1
             pass
 
 
@@ -405,6 +412,7 @@ def do_special(userid, specialId, step, num):
     '''
     干活,完成专题任务
     '''
+    global errorcodehas
     try:
         cookies = 'ServerSide=https://guangdong.xueanquan.com/;' + 'UserID=' + userid
         url = 'https://huodongapi.xueanquan.com/p/guangdong/Topic/topic/platformapi/api/v1/records/sign'
@@ -418,17 +426,22 @@ def do_special(userid, specialId, step, num):
                    'User-Agent': FakeUserAgent().random
                    }
         # json = {"specialId": specialId, "step": step}
-        specialIdtest = int(specialId)
-        #print (specialId)
-        if specialIdtest != 0:           
+        #specialIdtest = str(specialId)
+        #print(step)
+        #print (specialIdtest)
+        if str(specialId) == '0':
+            t.insert('end', 'ERROR: 无效的 specialId \n出现错误 \n请登陆官网执行任务 \n', "tag_red")
+            if str(step) == '1':
+                errorcodehas = errorcodehas+1
+                return False
+            else:
+                return False
+        else:
             json = {"specialId": specialId, "step": step}
             # print (json)
             res = requests.post(url=url, headers=headers, json=json)
             print(res.text)
             time.sleep(0.5)
-        else:
-            t.insert('end', 'ERROR: 无效的 specialId \n出现错误 \n请登陆官网执行任务 \n', "tag_red")
-            return False
     except Exception as e:
         print(e)
         if num < 4:
@@ -436,6 +449,7 @@ def do_special(userid, specialId, step, num):
             num = num + 1
             do_special(userid, specialId, step, num)
         else:
+            errorcodehas = errorcodehas+1
             pass
 
 
@@ -443,7 +457,7 @@ def do_holiday(userid, schoolYear, semester, step):
     '''
     完成寒暑假任务专题
     '''
-    
+    global errorcodehas
     try:
         url = 'https://huodongapi.xueanquan.com/p/guangdong/Topic/topic/platformapi/api/v1/holiday/sign'
         cookies = 'ServerSide=https://guangdong.xueanquan.com/;' + 'UserID=' + userid
@@ -471,13 +485,12 @@ def do_holiday(userid, schoolYear, semester, step):
             num = num + 1
             do_special(userid, specialId, step, num)
         else:
-            num = 1
+            errorcodehas = errorcodehas+1
             pass
 
 def main(username, password):
-
     num = 1
-    error = 0
+    global errorcodehas
     #global t
     # 登陆账号，获取信息
     accesstoken, serverside, userid, name, plainUserId = login(
@@ -563,6 +576,7 @@ def startmain():
         t.config(state=NORMAL)
         t.tag_config("tag_1", backgroun="yellow", foreground="red")
         t.tag_config("tag_3", foreground="green")
+        global errorcodehas
         tkinter.messagebox.showinfo(title='安全教育助手平台（学生版）', message="防沉迷助手提醒您：为了尽可能保障每个活动任务能够顺利完成，速度会慢点哦！")
         if len(inp1.get()) == 0 and len(inp2.get()) == 0: 
             tkinter.messagebox.showerror(title='错误', message="哦吼！！您似乎啥也没输入？，请再试一次")
@@ -575,26 +589,45 @@ def startmain():
             return 0
         username = inp1.get().replace("\n", "").replace("\x20", "")
         password = inp2.get().replace("\n", "").replace("\x20", "")
+        t.delete("2.0","end")
+        t.insert("end", "\n")
+        t.insert("end", "开始检测网络连通性..."+ "\n", "tag_3")
+        try:
+            html = requests.get("https://guangdong.xueanquan.com")
+        except:
+            tkinter.messagebox.showerror(title='失败',message='网络连接失败，请检查网络环境后再试')
+            t.delete("2.0","end")
+            return 0
         root.title(username + ' ，正在获取此账号的信息-----')
         # 登陆账号，获取信息
         accesstoken, serverside, userid, name, plainUserId = login(
             username, password)
         # 判断是否登录成功
         if name != '':
-            root.title(name + ' 欢迎您， 程序正在运行，请不要关闭此界面。。。。。。。。。。。')
-            t.delete("2.0","end")
-            t.insert("end", "\n")
+            root.title('学生 ' + name + ' 欢迎您， 程序正在运行，请不要关闭此界面。。。。。。。。。。。')
+            #t.delete("2.0","end")
+            #t.insert("end", "\n")
             t.insert("end", "当前执行的用户为 " + name + "\n", "tag_1")
             #t.insert("end", "\n")
             main(username, password)
             #time.sleep(5)
             root.title(title)
-            t.insert("end", name + " 该账号下的所有任务已完成 " + "\n", "tag_3")
-            t.config(state=DISABLED)
-            tkinter.messagebox.showinfo(title='提示', message="全部任务都完成啦！\n如恁不相信本助手的完成能力\n恁可以上账号后台观看记录")
+            if errorcodehas == 0:
+                t.insert("end", name + " 该账号下的所有任务已完成 " + "\n", "tag_3")
+                t.config(state=DISABLED)
+                tkinter.messagebox.showinfo(title='提示', message="全部任务都完成啦！\n如恁不相信本助手的完成能力\n恁可以上账号后台观看记录")
+            else:
+                t.insert("end", name + " 该账号有 " +str(errorcodehas) + ' 个任务未完成'+ "\n", "tag_red")
+                tkinter.messagebox.showerror(title='提示', message='学生 ' + name + " 有 " +str(errorcodehas) + ' 个任务未完成'+ "\n")
+                errorcodehas = 0
+                t.config(state=DISABLED)
+            #t.insert("end", name + " 该账号下的所有任务已完成 " + "\n", "tag_3")
+            #t.config(state=DISABLED)
+            #tkinter.messagebox.showinfo(title='提示', message="全部任务都完成啦！\n如恁不相信本助手的完成能力\n恁可以上账号后台观看记录")
             mystd.restoreStd()
             # sys.exit()
         else:
+            t.delete("2.0","end")
             t.config(state=DISABLED)
             tkinter.messagebox.showerror(title='提示', message="哦吼！！账号或密码输入错误，请再试一次")
             mystd.restoreStd()
@@ -602,13 +635,13 @@ def startmain():
 
 def updataprogram():
     try:
-        html = requests.get("https://file-fatdeadpanda.netlify.app/stuupdatalog")
+        html = requests.get("https://xueanquan-fatdeadpanda.netlify.app/getprogram/stuupdatalog")
     except:
         tkinter.messagebox.showerror(title='失败',message='网络连接失败，请检查网络环境后再试')
         return 0
-    url = 'https://file-fatdeadpanda.netlify.app/stuupdatalog'
-    ver_url = 'https://file-fatdeadpanda.netlify.app/stuver'
-    hashcheck_url = 'https://file-fatdeadpanda.netlify.app/hashcheck.html'
+    url = 'https://xueanquan-fatdeadpanda.netlify.app/getprogram/stuupdatalog'
+    ver_url = 'https://xueanquan-fatdeadpanda.netlify.app/getprogram/stuver'
+    hashcheck_url = 'https://xueanquan-fatdeadpanda.netlify.app/getprogram/hashcheck'
     header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36'}
     a = requests.get(url, headers = header).text
     b = requests.get(ver_url, headers = header).text.replace("\n", "")
@@ -617,7 +650,7 @@ def updataprogram():
         y = tkinter.messagebox.askyesno(title='喵呜~~ 检测到新版本!!!',message='目前版本为 '+ver +'\n\n最新版本为 '+b +'\n\n'+a)
         if y == False:
             return 0
-        Download_a1='https://xueanquan-fatdeadpanda.netlify.app/getprogram/latest-program.exe'
+        Download_a1='https://xueanquan-fatdeadpanda.netlify.app/getprogram/xueanquanhelper.exe'
         #a2=requests.get(Download_a1,headers=header,stream=True)
         #with open("./version-"+b +".exe","wb+") as code:
         #    code.write(a2.content)
@@ -633,17 +666,17 @@ def updataprogram():
         #t.delete("2.0","end")
         #t.config(state=DISABLED)
         with open("./version-"+b +".exe","rb") as hashjiaoyan:
-            bytes = hashjiaoyan.read() # read file as bytes
-            readable_hash = hashlib.md5(bytes).hexdigest();
+            bytes = hashjiaoyan.read()
+            readable_hash = hashlib.sha256(bytes).hexdigest();
             hashjiaoyan.close()
             print(readable_hash)
             if c == str(readable_hash):
-                tkinter.messagebox.showinfo(title='提示',message="下载完成\n\n请退出软件并运行 version-"+b +'.exe')
-                return 0
+                tkinter.messagebox.showinfo(title='提示',message="下载完成\n\n请退出软件并运行 "+ "./version-"+b +".exe" +"\n\n文件路径为\n\n"+ os.path.abspath("./version-"+b +".exe"))
+                os._exit(0)
+                #return 0            
             else:
-                tkinter.messagebox.showerror(title='提示', message="下载失败\n\n原因:\n\nMD5 hash 校验不通过\n\n官网校验信息\n"+c + "\n\n本地校验信息\n" + str(readable_hash))
+                tkinter.messagebox.showerror(title='提示', message="下载失败\n\n原因:\n\nSha256 校验不通过\n\n官网校验信息\n"+c + "\n\n本地校验信息\n" + str(readable_hash))
                 os.remove("./version-"+b +".exe")
-                
         #tkinter.messagebox.showinfo(title='提示',message="这只是测试版！！！！请尝试向开发者获取最新版本。。。")
     else:
         tkinter.messagebox.showinfo(title='提示', message="你已是最新版本")
@@ -651,6 +684,11 @@ def updataprogram():
 main_menu.add_command (label="检查更新", command = updataprogram)
 
 def about():
+    try:
+        html = requests.get("https://xueanquan-fatdeadpanda.netlify.app/getprogram/about")
+    except:
+        tkinter.messagebox.showerror(title='失败',message='网络连接失败，请检查网络环境后再试')
+        return 0
     top = Toplevel()
     top.title('关于')
     tmp = open("xueanquan.ico","wb+")
@@ -671,7 +709,7 @@ def about():
     CREATE_NO_WINDOW = 0x08000000
 
     header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36 Edg/99.0.1150.39'}
-    about = 'https://file-fatdeadpanda.netlify.app/about.html'
+    about = 'https://xueanquan-fatdeadpanda.netlify.app/getprogram/about'
     aboutme = requests.get(about, headers = header).text
 
 
@@ -724,7 +762,7 @@ def in_start():
         html = requests.get("https://guangdong.xueanquan.com")
     except:
         tkinter.messagebox.showerror(title='失败',message='网络连接失败，请检查网络环境后再试')
-        os._exit ()
+        os._exit(0)
     root.title('开始检测最新版本...')
     try:
         updataprogram()
@@ -745,12 +783,27 @@ inp2 = Entry(lf1, relief=GROOVE,textvariable = port)
 port.set('123456')
 inp2.place(x=120, y=80)
 tkinter.ttk.Button(root,text="登录", command = startmain).place(x=120,y=200)
-t = Text(root, font=('Consolas', 8))	
-t.place(x=340, y=20,width=355,height=325)
+t = scrolledtext.ScrolledText(root, font=('Consolas', 8))	
+t.place(x=340, y=20,width=355,height=310)
 t.tag_config("tag_blue", foreground="blue")
 t.tag_config("tag_red", foreground="red")
 t.tag_config("tag_yellow", backgroun="green", foreground="yellow")
 t.insert('end', 'LOG输出\n', "tag_blue")
+
+def callback1(event=None):
+    global root
+    t.event_generate('<<Copy>>')
+    
+menufortext = Menu(root,
+            tearoff=False,
+            #bg="black",
+            )
+menufortext.add_command(label="复制", command=callback1)
+
+def popup(event):
+    menufortext.post(event.x_root, event.y_root)   # post在指定的位置显示弹出菜单
+t.bind("<Button-3>", popup)  
+
 in_start()
 t.config(state=DISABLED)
 root.mainloop()
