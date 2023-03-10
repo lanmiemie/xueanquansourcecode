@@ -1,1 +1,1 @@
-git add . && git commit -m 'updata' && git push -f https://github.com/lanmiemie/xueanquansourcecode.git xueanquan
+git add . && git commit -m "UPLOAD NEW FILE :)" && git push -f https://github.com/lanmiemie/xueanquansourcecode.git xueanquan
