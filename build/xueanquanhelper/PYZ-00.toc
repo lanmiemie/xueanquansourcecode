@@ -400,6 +400,7 @@
   ('tracemalloc',
    'c:\\program files\\python38\\lib\\tracemalloc.py',
    'PYMODULE'),
+  ('_py_abc', 'c:\\program files\\python38\\lib\\_py_abc.py', 'PYMODULE'),
   ('getpass', 'c:\\program files\\python38\\lib\\getpass.py', 'PYMODULE'),
   ('nturl2path', 'c:\\program files\\python38\\lib\\nturl2path.py', 'PYMODULE'),
   ('ftplib', 'c:\\program files\\python38\\lib\\ftplib.py', 'PYMODULE'),
@@ -407,7 +408,6 @@
   ('http.cookiejar',
    'c:\\program files\\python38\\lib\\http\\cookiejar.py',
    'PYMODULE'),
-  ('_py_abc', 'c:\\program files\\python38\\lib\\_py_abc.py', 'PYMODULE'),
   ('hashlib', 'c:\\program files\\python38\\lib\\hashlib.py', 'PYMODULE'),
   ('fake_useragent',
    'c:\\program '

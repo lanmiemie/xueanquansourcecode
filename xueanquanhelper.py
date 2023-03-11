@@ -27,7 +27,7 @@ import hashlib
 
 root = Tk()
 #root.attributes("-alpha", 0.8)
-ver = "1.4.5"
+ver = "1.4.6"
 title='安全教育平台助手 - 学生版 '+ver
 root.title(title)
 tmp = open("xueanquan.ico","wb+")
@@ -49,6 +49,8 @@ root.resizable(0,0)
 port = StringVar()
 
 errorcodehas = 0
+pointcode = 0
+passwordcodetrue = 0
 
 
 main_menu = Menu(root)
@@ -660,6 +662,7 @@ def updataprogram():
         try:
             download(path, Download_a1)
         except Exception as e:
+            root.withdraw()
             tkinter.messagebox.showerror(title='下载失败',message='连接到远程服务器失败，请再试一次')
             return 0
         #    tkinter.messagebox.showerror(title='下载失败',message='未知错误，请再试一次')
@@ -740,11 +743,6 @@ def about():
     photo2 = PhotoImage(file="atmp.png")
     os.remove("atmp.png")
 
-
-    def webb():
-         webb = webbrowser.open("https://github.com/lanmiemie")
-         caidanbotton['state'] = NORMAL
-
     def caidan():
         topunknown = Toplevel()
         #root.attributes("-alpha", 0.8)
@@ -767,11 +765,10 @@ def about():
         y = int((screenHeight - winHeight) / 2)
         topunknown.geometry("%sx%s+%s+%s" % (winWidth, winHeight, x, y))
         topunknown.resizable(0,0)
-        pointcode = 0
-        passwordcodetrue = 0
-        Label(topunknown, text="Password:").place(x=10,y=30)
-        inp1 = Entry(root, relief=GROOVE)
+        Label(topunknown, text="FOOD:").place(x=10,y=30)
+        inp1 = Entry(topunknown, relief=GROOVE)
         inp1.place(x=80,y=30)
+        
 
         def gettext():
             global pointcode
@@ -783,10 +780,10 @@ def about():
                 if passwordcodetrue == 4:
                     tkinter.messagebox.showinfo(title='Alesha', message="Who are You :(")
                     tkinter.messagebox.showinfo(title='Alesha', message="Do you already know my plan? :((")
-                    tkinter.messagebox.showinfo(title='Alesha', message="Anyone who knows about this plan has to die :(((")
+                    tkinter.messagebox.showinfo(title='Alesha', message="Anyone who knows about this plan will not end well :(((")
                     tkinter.messagebox.showinfo(title='Alesha', message="So.... :((((")
-                    tkinter.messagebox.showinfo(title='Alesha', message="I WILL EXIT THIS PROGRAM AND RESTART YOUR COMPUTER :)")
-                    tkinter.messagebox.showinfo(title='Alesha', message="SO SAY GOODBAY :)")
+                    tkinter.messagebox.showwarning(title='Alesha', message="I WILL EXIT THIS PROGRAM AND RESTART YOUR COMPUTER :)")
+                    tkinter.messagebox.showwarning(title='Alesha', message="SO SAY GOODBAY :)")
                     os._exit(0)
                 else:
                     tkinter.messagebox.showinfo(title='Alesha', message="There is nothing here :)")
@@ -798,17 +795,29 @@ def about():
                 else:
                     tkinter.messagebox.showerror(title='Error', message="You don't have access to the core :(")
             #print(str(getpassword))
+            #topunknown.attributes("-toolwindow", 1)
+            #top.wm_attributes('-topmost','false')
+            topunknown.wm_attributes('-topmost','true')
+            
         tkinter.ttk.Button(topunknown,text="?!", command = gettext).place(x=80,y=70)
 
 
+    caidanbotton = Button(top,borderwidth = 2,text = "★★★★★★★★★★★★" + title + "★★★★★★★★★★★★",relief="ridge",state=DISABLED,command=caidan)
+    caidanbotton.place(x=150, y=20)
+    #top.attributes("-toolwindow", 1)
+    #top.wm_attributes('-topmost','true')
 
     def webb1():
          webb = webbrowser.open("https://github.com/MissedYyang")
          caidanbotton['state'] = NORMAL
+
+    def webb():
+         webb = webbrowser.open("https://github.com/lanmiemie")
+         caidanbotton['state'] = NORMAL
         
     Button(top,borderwidth = 2 ,image=photo ,relief="ridge",command=webb1).place(x=20, y=150)
     Button(top,borderwidth = 2 ,image=photo2 ,relief="ridge",command=webb).place(x=165, y=150)
-    caidanbotton = Button(top,borderwidth = 2,text = "★★★★★★★★★★★★" + title + "★★★★★★★★★★★★",relief="flat",state=DISABLED,command=caidan).place(x=120, y=20)
+    
     Label(top, text="@ MissedYyang ↓",fg = 'green').place(x=25 ,y=120)
     Label(top, text="@ Lanmiemie ↓",fg = 'green').place(x=175 ,y=120)
     
@@ -864,4 +873,6 @@ t.bind("<Button-3>", popup)
 
 in_start()
 t.config(state=DISABLED)
+
+#root.wm_attributes('-topmost','true')
 root.mainloop()
