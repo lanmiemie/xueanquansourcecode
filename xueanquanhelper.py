@@ -390,6 +390,14 @@ def get_special(url, userid):
         value = re.findall("location.replace(.*?);", res.text)[0]
         # print(value)
         value1 = value.split("'")[1]
+        url2 = url.replace('index.html', 'message.html').replace('?require-un=true', '' )
+        print('留言列表:', url2)
+        getsd= requests.get(url=url2, headers=headers)
+        getsddata = etree.HTML(getsd.text)
+        getsparesd = getsddata.xpath("//title[normalize-space()]/text()")
+        getsparesda = str(getsparesd)
+        getsparesdtext = getsparesda.replace("'", '').replace("[", '').replace("]", '')
+        
 
     except Exception as e:
         print(e)
@@ -408,9 +416,10 @@ def get_special(url, userid):
         id_all = re.findall('data-specialId="(.*?)"', res2)[0]
 
     print('专题id:  ', id_all)
-    return id_all
+    print('备用专题id:  ',getsparesdtext)
+    return id_all,getsparesdtext;
 
-def do_special(userid, specialId, step, num):
+def do_special(userid, specialId, sparespecialId, step, num):
     '''
     干活,完成专题任务
     '''
@@ -432,12 +441,20 @@ def do_special(userid, specialId, step, num):
         #print(step)
         #print (specialIdtest)
         if str(specialId) == '0':
-            t.insert('end', 'ERROR: 无效的 specialId \n出现错误 \n请登陆官网执行任务 \n', "tag_red")
-            if str(step) == '1':
-                errorcodehas = errorcodehas+1
-                return False
-            else:
-                return False
+            t.insert('end', 'ERROR: 无效的 specialId \n出现错误 \n正在尝试使用备用ID \n', "tag_red")
+            try:
+                json = {"specialId": sparespecialId, "step": step}
+                # print (json)
+                res = requests.post(url=url, headers=headers, json=json)
+                print(res.text)
+                #t.insert('end', 'YES: 已完成步骤 '+step +' \n', "tag_green")
+                #time.sleep(0.5)
+            except Exception as e:
+                if str(step) == '1':
+                    errorcodehas = errorcodehas+1
+                    return False
+                else:
+                    return False
         else:
             json = {"specialId": specialId, "step": step}
             # print (json)
@@ -566,10 +583,11 @@ def main(username, password):
                     # 获取id
                     # 完成专题任务
 
-                    id_all = get_special(url, userid)
+                    id_all,getsparesdtext = get_special(url, userid)
                     specialId = id_all
-                    do_special(userid, specialId, step=1, num=num)
-                    do_special(userid, specialId, step=2, num=num)
+                    sparespecialId = getsparesdtext
+                    do_special(userid, specialId, sparespecialId, step=1, num=num)
+                    do_special(userid, specialId, sparespecialId, step=2, num=num)
 
 
 
