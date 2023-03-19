@@ -27,7 +27,7 @@ import hashlib
 
 root = Tk()
 #root.attributes("-alpha", 0.8)
-ver = "1.4.6"
+ver = "1.4.7"
 title='安全教育平台助手 - 学生版 '+ver
 root.title(title)
 tmp = open("xueanquan.ico","wb+")
