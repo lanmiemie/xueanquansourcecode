@@ -27,7 +27,7 @@ import hashlib
 
 root = Tk()
 #root.attributes("-alpha", 0.8)
-ver = "1.4.7"
+ver = "1.4.8"
 title='安全教育平台助手 - 学生版 '+ver
 root.title(title)
 tmp = open("xueanquan.ico","wb+")
@@ -442,14 +442,16 @@ def do_special(userid, specialId, sparespecialId, step, num):
         #print (specialIdtest)
         if str(specialId) == '0':
             t.insert('end', 'ERROR: 无效的 specialId \n出现错误 \n正在尝试使用备用ID \n', "tag_red")
-            try:
-                json = {"specialId": sparespecialId, "step": step}
+            json = {"specialId": sparespecialId, "step": step}
                 # print (json)
-                res = requests.post(url=url, headers=headers, json=json)
+            res = requests.post(url=url, headers=headers, json=json)
+            if str('"httpCode":200') in res.text:
+                t.insert('end', 'YES: 已完成步骤 '+str(step) +' \n', "tag_green")
+            elif  str('"httpCode":0') in res.text:
+                t.insert('end', 'WARNING:: 您已完成步骤 '+str(step) +' \n', "tag_yellow")
+            else:
+                t.insert('end', 'ERROR: 无法完成当前任务，您可尝试更新到最新版本 \n', "tag_red")
                 print(res.text)
-                #t.insert('end', 'YES: 已完成步骤 '+step +' \n', "tag_green")
-                #time.sleep(0.5)
-            except Exception as e:
                 if str(step) == '1':
                     errorcodehas = errorcodehas+1
                     return False
@@ -872,7 +874,8 @@ t = scrolledtext.ScrolledText(root, font=('Consolas', 8))
 t.place(x=340, y=20,width=355,height=310)
 t.tag_config("tag_blue", foreground="blue")
 t.tag_config("tag_red", foreground="red")
-t.tag_config("tag_yellow", backgroun="green", foreground="yellow")
+t.tag_config("tag_yellow", backgroun="yellow", foreground="red")
+t.tag_config("tag_green", foreground="green")
 t.insert('end', 'LOG输出\n', "tag_blue")
 
 def callback1(event=None):
