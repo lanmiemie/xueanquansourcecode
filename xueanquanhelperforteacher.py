@@ -55,6 +55,7 @@ student_all = 0
 teacher_cookies = 0
 teacher_name = 0
 num = 0
+classroomname = 0
 
 
 main_menu = Menu(root)
@@ -205,6 +206,7 @@ def log_out():
     global teacher_cookies
     global teacher_name
     global num
+    global classroomname
     
     errorcodehas = 0
     pointcode = 0
@@ -213,11 +215,16 @@ def log_out():
     teacher_cookies = 0
     teacher_name = 0
     num = 0
+    classroomname = 0
 
     reset_allstudents_password_button.place_forget()
     logoutbutton.place_forget()
     do_students_work_button.place_forget()
     showteacherinfo.place_forget()
+    download_students_xlsx_button.place_forget()
+    t.config(state=NORMAL)
+    t.delete("2.0","end")
+    t.config(state=DISABLED)
     lf1.place(x=8, y=8,width=330,height=150)
     loginbutton.place(x=120,y=200)
     root.title(title)
@@ -910,6 +917,7 @@ def startmain():
         global teacher_cookies
         global student_all
         global teacher_name
+        global classroomname
         #tkinter.messagebox.showinfo(title='安全教育助手平台（学生版）', message="防沉迷助手提醒您：为了尽可能保障每个活动任务能够顺利完成，速度会慢点哦！")
         if len(inp1.get()) == 0 and len(inp2.get()) == 0: 
             tkinter.messagebox.showerror(title='错误', message="哦吼！！您似乎啥也没输入？，请再试一次")
@@ -954,11 +962,10 @@ def startmain():
                 Label(showteacherinfo, text='所在学校: '+str(schoolname)).place(x=40,y=35)
                 Label(showteacherinfo, text='所在班级: '+str(classroomname)).place(x=40,y=60)
                 Label(showteacherinfo, text='学生总数: '+str(len(student_all))).place(x=40,y=85)
-                reset_allstudents_password_button.place(x=30,y=190)
-                do_students_work_button.place(x=30,y=220)
-                logoutbutton.place(x=230,y=205)
-                xlsxurl = get_students_xlsx(teacher_cookies)
-                download_xlsx(xlsxurl,teacher_cookies)
+                reset_allstudents_password_button.place(x=30,y=180)
+                do_students_work_button.place(x=30,y=210)
+                download_students_xlsx_button.place(x=30,y=240)
+                logoutbutton.place(x=230,y=210)
                 #t.insert("end", name + " 该账号下的所有任务已完成 " + "\n", "tag_3")
                 #t.config(state=DISABLED)
                 #tkinter.messagebox.showinfo(title='提示', message="全部任务都完成啦！\n如恁不相信本助手的完成能力\n恁可以上账号后台观看记录")
@@ -1031,14 +1038,15 @@ def updataprogram():
 
 main_menu.add_command (label="检查更新", command = updataprogram)
 
-def download_xlsx(url,cookies):
+def download_xlsx(cookies,classroomname):
     yes_or_no = tkinter.messagebox.askyesno(title='提示',message='确定要下载学生账号表格吗?')
     if yes_or_no == False:
         return 0
     gettime = time.strftime('%Y-%m-%d--%H-%M-%S',time.localtime())
-    path="./学生信息-"+str(gettime) +".xls"
+    path="./"+str(classroomname)+"-学生信息-"+str(gettime) +".xls"
+    xlsxurl = get_students_xlsx(teacher_cookies)
     try:
-        download(path, url ,cookies)
+        download(path, xlsxurl ,cookies)
     except Exception as e:
         root.withdraw()
         tkinter.messagebox.showerror(title='下载失败',message='连接到远程服务器失败，请再试一次')
@@ -1225,6 +1233,7 @@ loginbutton = tkinter.ttk.Button(root,text="登录", command = startmain)
 loginbutton.place(x=120,y=200)
 logoutbutton = tkinter.ttk.Button(root,text="注销", command = log_out)
 do_students_work_button = tkinter.ttk.Button(root,text="完成该账号下所有学生任务", command = lambda:do_students_work(student_all, teacher_cookies, num, teacher_name))
+download_students_xlsx_button = tkinter.ttk.Button(root,text="下载所有学生账号", command = lambda:download_xlsx(teacher_cookies,classroomname))
 reset_allstudents_password_button = tkinter.ttk.Button(root,text="重置该账号下所有学生密码", command = lambda:reset_allstudents_password(student_all, teacher_cookies, num, teacher_name))
 t = scrolledtext.ScrolledText(root, font=('Consolas', 8))	
 t.place(x=340, y=20,width=355,height=310)
