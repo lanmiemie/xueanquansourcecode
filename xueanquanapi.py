@@ -7,7 +7,7 @@ cookie = 'ServerSide=https://guangdong.xueanquan.com/;UserID=6B0A87E07EB878EC437
 
 def get_schoolid(cookies):
     '''
-    获取学校ID，schoolid
+    获取教师各类ID, 例: Schoolid, Gradeid, Classroomid.等.....
     '''
     url = 'https://guangdong.xueanquan.com/safeapph5/accountSituation/_ClassTeacher'
     headers = {'Accept': '*//*',
@@ -57,7 +57,7 @@ Schoolidtext, Gradeidtext, Classroomidtext, Semesteridtext, UserTypeidtext, Orde
 
 def get_studentlist(cookies, Schoolid, Gradeid, Classroomid, Semesterid, UserTypeid, OrderColumnid, CurrentPageid):
     '''
-    获取学校ID，schoolid
+    获取获取学生姓名和账号, ID
     '''
     url = 'https://guangdong.xueanquan.com/safeapph5/api/safeEduCardinalData/getAppUserlist?r=0.6287044059085791'
 
@@ -84,10 +84,14 @@ def get_studentlist(cookies, Schoolid, Gradeid, Classroomid, Semesterid, UserTyp
         
     res = requests.post(url=url, headers=headers, data=data1)
 
+    #print(res.text)
+
+    userid_all = re.findall('"userID": (.*?),', res.text)
     studentname_all = re.findall('"trueName": "(.*?)",', res.text)
     studentid_all = re.findall('"userName": "(.*?)",', res.text)
+    
 
-    print(str(studentname_all), str(studentid_all))
+    print(str(studentname_all), str(studentid_all), str(userid_all))
 
 get_studentlist(cookie, Schoolidtext, Gradeidtext, Classroomidtext, Semesteridtext, UserTypeidtext, OrderColumnidtext, CurrentPageidtext)
 
