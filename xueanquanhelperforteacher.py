@@ -24,6 +24,7 @@ import logging
 from tkinter import scrolledtext
 from fake_useragent import FakeUserAgent
 import hashlib
+from xueanquanapi import get_schoolid, get_studentlist
 
 root = Tk()
 #root.attributes("-alpha", 0.8)
@@ -844,7 +845,7 @@ def do_students_work(student_all, teacher_cookies, num, teacher_name):
         mystd.restoreStd()
     else:
         t.insert("end", name + " 该账号有 " +str(errorcodehas) + ' 个任务未完成'+ "\n", "tag_red")
-        tkinter.messagebox.showerror(title='提示', message='教师 ' + name + " 有 " +str(errorcodehas) + ' 个任务未完成'+ "\n")
+        tkinter.messagebox.showerror(title='提示', message='教师 ' + teacher_name + " 有 " +str(errorcodehas) + ' 个任务未完成'+ "\n")
         errorcodehas = 0
         t.config(state=DISABLED)
         mystd.restoreStd()
@@ -896,8 +897,8 @@ def reset_allstudents_password(student_all, teacher_cookies, num, teacher_name):
         #loginbutton.place(x=120,y=200)
         mystd.restoreStd()
     else:
-        t.insert("end", name + " 该账号有 " +str(errorcodehas) + ' 个任务未完成'+ "\n", "tag_red")
-        tkinter.messagebox.showerror(title='提示', message='教师 ' + name + " 有 " +str(errorcodehas) + ' 个任务未完成'+ "\n")
+        t.insert("end", teacher_name + " 该账号有 " +str(errorcodehas) + ' 个任务未完成'+ "\n", "tag_red")
+        tkinter.messagebox.showerror(title='提示', message='教师 ' + teacher_name + " 有 " +str(errorcodehas) + ' 个任务未完成'+ "\n")
         errorcodehas = 0
         t.config(state=DISABLED)
         mystd.restoreStd()
