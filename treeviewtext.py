@@ -121,6 +121,14 @@ def get_studentlist(cookies, Schoolid, Gradeid, Classroomid, Semesterid, UserTyp
 
 get_studentlist(cookie, Schoolidtext, Gradeidtext, Classroomidtext, Semesteridtext, UserTypeidtext, OrderColumnidtext, CurrentPageidtext)
 
-tree1.pack(fill=BOTH,expand=True)
+def adbc(a):
+    id_list = tree1.selection()
+    for item in id_list:
+        name,id1,classroomname1,studentid1 = tree1.item(item)["values"]
+        print(name,id1,classroomname1,studentid1)
+
+tree1.bind('<ButtonRelease-1>', adbc)
+
+tree1.place(x=0,y=0)
  
 root.mainloop()
