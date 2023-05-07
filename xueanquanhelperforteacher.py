@@ -844,7 +844,7 @@ def do_students_work(student_all, teacher_cookies, num, teacher_name):
         #loginbutton.place(x=120,y=200)
         mystd.restoreStd()
     else:
-        t.insert("end", name + " 该账号有 " +str(errorcodehas) + ' 个任务未完成'+ "\n", "tag_red")
+        t.insert("end", teacher_name + " 该账号有 " +str(errorcodehas) + ' 个任务未完成'+ "\n", "tag_red")
         tkinter.messagebox.showerror(title='提示', message='教师 ' + teacher_name + " 有 " +str(errorcodehas) + ' 个任务未完成'+ "\n")
         errorcodehas = 0
         t.config(state=DISABLED)

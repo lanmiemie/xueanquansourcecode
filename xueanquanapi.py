@@ -86,12 +86,21 @@ def get_studentlist(cookies, Schoolid, Gradeid, Classroomid, Semesterid, UserTyp
 
     #print(res.text)
 
+    all_list = list()
+
     userid_all = re.findall('"userID": (.*?),', res.text)
     studentname_all = re.findall('"trueName": "(.*?)",', res.text)
     studentid_all = re.findall('"userName": "(.*?)",', res.text)
-    
+    totalitems = re.findall('"totalItems": (.*?),', res.text)
 
-    print(str(studentname_all), str(studentid_all), str(userid_all))
+    for stu_name,stu_id,stu_user_id in zip(studentname_all,studentid_all,userid_all):
+        totallist = "list%s"%len(totalitems)
+        totallist = [stu_name,stu_id,stu_user_id]
+        all_list.append(totallist)
+        #print(totallist)
+        #len(totallist)
+
+    print(all_list)
+    #print(str(studentname_all), str(studentid_all), str(userid_all))
 
 get_studentlist(cookie, Schoolidtext, Gradeidtext, Classroomidtext, Semesteridtext, UserTypeidtext, OrderColumnidtext, CurrentPageidtext)
-
