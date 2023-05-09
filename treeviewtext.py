@@ -129,6 +129,6 @@ def adbc(a):
 
 tree1.bind('<ButtonRelease-1>', adbc)
 
-tree1.place(x=0,y=0)
+tree1.pack()
  
 root.mainloop()
