@@ -1,9 +1,6 @@
 import requests
-import os
 from lxml import etree
 import re
-
-cookie = 'ServerSide=https://guangdong.xueanquan.com/;UserID=6B0A87E07EB878EC437CABB6803CBC17'
 
 def get_schoolid(cookies):
     '''
@@ -51,15 +48,14 @@ def get_schoolid(cookies):
     
     getCurrentPageid = xpathhtml.xpath("//input[@id='CurrentPage']/@value")
     CurrentPageid = str(getCurrentPageid).replace("'", '').replace("[", '').replace("]", '')
+    
     return Schoolid, Gradeid, Classroomid, Semesterid, UserTypeid, OrderColumnid, CurrentPageid
-
-Schoolidtext, Gradeidtext, Classroomidtext, Semesteridtext, UserTypeidtext, OrderColumnidtext, CurrentPageidtext = get_schoolid(cookie)
 
 def get_studentlist(cookies, Schoolid, Gradeid, Classroomid, Semesterid, UserTypeid, OrderColumnid, CurrentPageid):
     '''
     获取获取学生姓名和账号, ID
     '''
-    url = 'https://guangdong.xueanquan.com/safeapph5/api/safeEduCardinalData/getAppUserlist?r=0.6287044059085791'
+    url = 'https://guangdong.xueanquan.com/safeapph5/api/safeEduCardinalData/getAppUserlist'
 
     headers = {'Accept': '*//*',
                'Accept-Encoding': 'gzip',
@@ -92,15 +88,16 @@ def get_studentlist(cookies, Schoolid, Gradeid, Classroomid, Semesterid, UserTyp
     studentname_all = re.findall('"trueName": "(.*?)",', res.text)
     studentid_all = re.findall('"userName": "(.*?)",', res.text)
     totalitems = re.findall('"totalItems": (.*?),', res.text)
+    classroomname = re.findall('"className": "(.*?)",', res.text)
+    grade = re.findall('"grade": (.*?),', res.text)
 
-    for stu_name,stu_id,stu_user_id in zip(studentname_all,studentid_all,userid_all):
+    for stu_name,stu_id,stu_user_id,stu_classroomname,stu_grade in zip(studentname_all,studentid_all,userid_all,classroomname,grade):
         totallist = "list%s"%len(totalitems)
-        totallist = [stu_name,stu_id,stu_user_id]
+        stu_grade_and_classroom = str(stu_grade) +'年级'+ str(stu_classroomname)
+        totallist = [stu_name,stu_id,stu_grade_and_classroom,stu_user_id]
         all_list.append(totallist)
         #print(totallist)
         #len(totallist)
 
-    print(all_list)
-    #print(str(studentname_all), str(studentid_all), str(userid_all))
+    return all_list
 
-get_studentlist(cookie, Schoolidtext, Gradeidtext, Classroomidtext, Semesteridtext, UserTypeidtext, OrderColumnidtext, CurrentPageidtext)

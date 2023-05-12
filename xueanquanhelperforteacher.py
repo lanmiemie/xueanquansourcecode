@@ -24,7 +24,7 @@ import logging
 from tkinter import scrolledtext
 from fake_useragent import FakeUserAgent
 import hashlib
-from xueanquanapi import get_schoolid, get_studentlist
+from treeviewtext import importtreeview
 
 root = Tk()
 #root.attributes("-alpha", 0.8)
@@ -967,6 +967,7 @@ def startmain():
                 do_students_work_button.place(x=30,y=210)
                 download_students_xlsx_button.place(x=30,y=240)
                 logoutbutton.place(x=230,y=210)
+                importtreeview(teacher_cookies)
                 #t.insert("end", name + " 该账号下的所有任务已完成 " + "\n", "tag_3")
                 #t.config(state=DISABLED)
                 #tkinter.messagebox.showinfo(title='提示', message="全部任务都完成啦！\n如恁不相信本助手的完成能力\n恁可以上账号后台观看记录")
