@@ -3,13 +3,11 @@ import re
 from tkinter import *
 import tkinter.ttk
 import os
-import io
 from PIL import Image, ImageTk
 import tkinter.messagebox
 import webbrowser
 import requests
 import sys
-import subprocess
 import base64
 import time
 from MissedYyang import png1
@@ -17,18 +15,14 @@ from lanmiemie import png
 from lxml import etree
 from xueanquanicon import img
 import tkinter.filedialog
-import ctypes
-import random
-#import threading
-import logging
 from tkinter import scrolledtext
 from fake_useragent import FakeUserAgent
 import hashlib
-from treeviewtext import importtreeview
+from xueanquanapi import get_schoolid, get_studentlist
 
 root = Tk()
 #root.attributes("-alpha", 0.8)
-ver = "1.2.0"
+ver = "1.2.5"
 title='安全教育平台助手 - 教师版 '+ver
 root.title(title)
 tmp = open("xueanquan.ico","wb+")
@@ -83,6 +77,15 @@ class myStdout():	# 重定向类
         sys.stdout = self.stdoutbak
         sys.stderr = self.stderrbak
 
+def back_window_side():
+    winWidth = 700
+    winHeight = 350
+    screenWidth = root.winfo_screenwidth()
+    screenHeight = root.winfo_screenheight()
+    x = int((screenWidth - winWidth) / 2)
+    y = int((screenHeight - winHeight) / 2)
+    root.geometry("%sx%s+%s+%s" % (winWidth, winHeight, x, y))
+    root.resizable(0,0)
 
 def download(name, url, cookies, header={'Connection': 'keep-alive','User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36'}, interval=0.5):
     def MB(byte):
@@ -225,11 +228,13 @@ def log_out():
     download_students_xlsx_button.place_forget()
     t.config(state=NORMAL)
     t.delete("2.0","end")
+    tree1.delete(*tree1.get_children())
+    lf_for_students.place_forget()
     t.config(state=DISABLED)
+    back_window_side()
     lf1.place(x=8, y=8,width=330,height=150)
     loginbutton.place(x=120,y=200)
     root.title(title)
-
 
 def get_students(cookies):
     '''
@@ -957,6 +962,13 @@ def startmain():
                 teacher_cookies = 'ServerSide={0};UserID={1}'.format(serverside, userid)
                 teacher_name = name
                 num = 1
+                winWidth = 1100
+                winHeight = 350
+                screenWidth = root.winfo_screenwidth()
+                screenHeight = root.winfo_screenheight()
+                x = int((screenWidth - winWidth) / 2)
+                y = int((screenHeight - winHeight) / 2)
+                root.geometry("%sx%s+%s+%s" % (winWidth, winHeight, x, y))
                 student_all = get_students(teacher_cookies)
                 showteacherinfo.place(x=8, y=8,width=330,height=150)
                 Label(showteacherinfo, text='教师姓名: '+str(teacher_name)).place(x=40,y=10)
@@ -966,8 +978,12 @@ def startmain():
                 reset_allstudents_password_button.place(x=30,y=180)
                 do_students_work_button.place(x=30,y=210)
                 download_students_xlsx_button.place(x=30,y=240)
+                lf_for_students.place(x=340, y=8,width=403,height=340)
                 logoutbutton.place(x=230,y=210)
-                importtreeview(teacher_cookies)
+                Schoolidtext, Gradeidtext, Classroomidtext, Semesteridtext, UserTypeidtext, OrderColumnidtext, CurrentPageidtext = get_schoolid(teacher_cookies)
+                get_all_list = get_studentlist(teacher_cookies, Schoolidtext, Gradeidtext, Classroomidtext, Semesteridtext, UserTypeidtext, OrderColumnidtext, CurrentPageidtext)
+                for all_list in get_all_list:
+                    tree1.insert('', END, values=all_list)
                 #t.insert("end", name + " 该账号下的所有任务已完成 " + "\n", "tag_3")
                 #t.config(state=DISABLED)
                 #tkinter.messagebox.showinfo(title='提示', message="全部任务都完成啦！\n如恁不相信本助手的完成能力\n恁可以上账号后台观看记录")
@@ -987,6 +1003,9 @@ def startmain():
             tkinter.messagebox.showerror(title='无法登录', message=str(tip))
             mystd.restoreStd()
             root.title(title)
+
+#def get_treeview_students_information():
+
 
 def updataprogram():
     try:
@@ -1063,9 +1082,7 @@ def download_xlsx(cookies,classroomname):
     openfile = tkinter.messagebox.askyesno(title='提示',message='下载完成\n\n文件路径为\n'+os.path.abspath(path)+'\n\n或者你可以按 "确定" 来打开表格')
     if openfile == False:
         return 0
-    os.startfile(os.path.abspath(path))
-
-    
+    os.startfile(os.path.abspath(path))  
     
 def about():
     try:
@@ -1223,6 +1240,17 @@ def in_start():
 
 lf1 = tkinter.ttk.LabelFrame(root,text="登录信息")
 showteacherinfo = tkinter.ttk.LabelFrame(root,text="教师信息")
+lf_for_students = tkinter.ttk.LabelFrame(root,text="学生信息")
+tree1 = tkinter.ttk.Treeview(lf_for_students, columns=('xm', 'zh', 'stuclass', 'stuid'),show='headings') 
+tree1.heading('xm', text='姓名')
+tree1.heading('zh', text='账号')
+tree1.heading('stuclass', text='所在班级')
+tree1.heading('stuid', text='学生ID')
+tree1.column('xm', width=60,anchor='center')
+tree1.column('zh', width=130,anchor='center')
+tree1.column('stuclass', width=80,anchor='center')
+tree1.column('stuid', width=90,anchor='center')
+tree1.pack(fill=BOTH, expand='yes')
 lf1.place(x=8, y=8,width=330,height=150)
 Label(lf1, text="教师账号").place(x=40,y=30)
 inp1 = Entry(lf1, relief=GROOVE)
@@ -1238,7 +1266,7 @@ do_students_work_button = tkinter.ttk.Button(root,text="完成该账号下所有
 download_students_xlsx_button = tkinter.ttk.Button(root,text="下载所有学生账号", command = lambda:download_xlsx(teacher_cookies,classroomname))
 reset_allstudents_password_button = tkinter.ttk.Button(root,text="重置该账号下所有学生密码", command = lambda:reset_allstudents_password(student_all, teacher_cookies, num, teacher_name))
 t = scrolledtext.ScrolledText(root, font=('Consolas', 8))	
-t.place(x=340, y=20,width=355,height=310)
+t.place(relx = 1,anchor = NE,width=355,height=350)
 t.tag_config("tag_blue", foreground="blue")
 t.tag_config("tag_red", foreground="red")
 t.tag_config("tag_yellow", backgroun="yellow", foreground="red")
