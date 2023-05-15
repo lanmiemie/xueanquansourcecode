@@ -77,7 +77,7 @@ class myStdout():	# 重定向类
         sys.stdout = self.stdoutbak
         sys.stderr = self.stderrbak
 
-def back_window_side():
+def back_window_size():
     winWidth = 700
     winHeight = 350
     screenWidth = root.winfo_screenwidth()
@@ -146,11 +146,11 @@ def download(name, url, cookies, header={'Connection': 'keep-alive','User-Agent'
                 #sys.stdout.write("\r[%s%s] %d%%" % ('>' * done, ' ' * (50 - done), 100 * down_size / file_size))
                 #sys.stdout.flush()
                 t.config(state=NORMAL)
-                t.delete("2.0","end")
+                t.delete("1.0","end")
                 t.insert("end", '\n'+'\r{:.1f}MB/s -已下载 {:.1f}MB，共 {:.1f}MB 已下载百分之:{:.2%} 还剩 {:.0f} 秒   '.format(*print_params))
                 t.update()
                 t.see(tkinter.END)
-                t.delete("2.0","end")
+                t.delete("1.0","end")
                 #print('\r{:.1f}MB/s -已下载 {:.1f}MB，共 {:.1f}MB 已下载百分之:{:.2%} 还剩 {:.0f} 秒   '.format(*print_params))
     f.close()
     t.config(state=DISABLED)
@@ -227,11 +227,12 @@ def log_out():
     showteacherinfo.place_forget()
     download_students_xlsx_button.place_forget()
     t.config(state=NORMAL)
-    t.delete("2.0","end")
+    t.delete("1.0","end")
     tree1.delete(*tree1.get_children())
     lf_for_students.place_forget()
+    lf_for_text.place_forget()
     t.config(state=DISABLED)
-    back_window_side()
+    back_window_size()
     lf1.place(x=8, y=8,width=330,height=150)
     loginbutton.place(x=120,y=200)
     root.title(title)
@@ -818,14 +819,13 @@ def do_students_work(student_all, teacher_cookies, num, teacher_name):
     reset_allstudents_password_button['state'] = DISABLED
     logoutbutton['state'] = DISABLED
     t.config(state=NORMAL)
-    t.delete("2.0","end")
-    t.insert("end", "\n")
+    t.delete("1.0","end")
     t.insert("end", "开始检测网络连通性..."+ "\n", "tag_3")
     try:
         html = requests.get("https://guangdong.xueanquan.com")
     except Exception as e:
         tkinter.messagebox.showerror(title='失败',message='网络连接失败，请检查网络环境后再试')
-        t.delete("2.0","end")
+        t.delete("1.0","end")
         return 0
     for studen in student_all:
         # 获取学生名字，学生ID
@@ -876,8 +876,7 @@ def reset_allstudents_password(student_all, teacher_cookies, num, teacher_name):
     reset_allstudents_password_button['state'] = DISABLED
     logoutbutton['state'] = DISABLED
     t.config(state=NORMAL)
-    t.delete("2.0","end")
-    t.insert("end", "\n")
+    t.delete("1.0","end")
     t.insert("end", "开始检测网络连通性..."+ "\n", "tag_3")
     reset_students_password_num = 0
     for studen in student_all:
@@ -936,14 +935,14 @@ def startmain():
             return 0
         username = inp1.get().replace("\n", "").replace("\x20", "")
         password = inp2.get().replace("\n", "").replace("\x20", "")
-        t.delete("2.0","end")
-        t.insert("end", "\n")
+        t.delete("1.0","end")
+        #t.insert("end", "\n")
         t.insert("end", "开始检测网络连通性..."+ "\n", "tag_3")
         try:
             html = requests.get("https://guangdong.xueanquan.com")
         except Exception as e:
             tkinter.messagebox.showerror(title='失败',message='网络连接失败，请检查网络环境后再试')
-            t.delete("2.0","end")
+            t.delete("1.0","end")
             return 0
         root.title(username + ' ，正在获取此账号的信息-----')
         # 登陆账号，获取信息
@@ -954,7 +953,7 @@ def startmain():
             if studentorteacher == '"班主任"':
                 #root.title('尊敬的 ' + name + ' 老师 欢迎您!!!!!')
                 root.title(title)
-                #t.delete("2.0","end")
+                #t.delete("1.0","end")
                 #t.insert("end", "\n")
                 loginbutton.place_forget()
                 lf1.place_forget()
@@ -979,6 +978,7 @@ def startmain():
                 do_students_work_button.place(x=30,y=210)
                 download_students_xlsx_button.place(x=30,y=240)
                 lf_for_students.place(x=340, y=8,width=403,height=340)
+                lf_for_text.place(x=745, y=8,width=353,height=340)
                 logoutbutton.place(x=230,y=210)
                 Schoolidtext, Gradeidtext, Classroomidtext, Semesteridtext, UserTypeidtext, OrderColumnidtext, CurrentPageidtext = get_schoolid(teacher_cookies)
                 get_all_list = get_studentlist(teacher_cookies, Schoolidtext, Gradeidtext, Classroomidtext, Semesteridtext, UserTypeidtext, OrderColumnidtext, CurrentPageidtext)
@@ -991,14 +991,14 @@ def startmain():
                 mystd.restoreStd()
                 # sys.exit()
             else:
-                t.delete("2.0","end")
+                t.delete("1.0","end")
                 t.config(state=DISABLED)
                 tkinter.messagebox.showinfo(title='提示', message="你好 " + name +" 同学!\n\n您输入的不是教师账号,请核对后再试!!!")
                 mystd.restoreStd()
                 root.title(title)
                 pass
         else:
-            t.delete("2.0","end")
+            t.delete("1.0","end")
             t.config(state=DISABLED)
             tkinter.messagebox.showerror(title='无法登录', message=str(tip))
             mystd.restoreStd()
@@ -1039,7 +1039,7 @@ def updataprogram():
             tkinter.messagebox.showerror(title='下载失败',message='连接到远程服务器失败，请再试一次')
             return 0
         #    tkinter.messagebox.showerror(title='下载失败',message='未知错误，请再试一次')
-        #t.delete("2.0","end")
+        #t.delete("1.0","end")
         #t.config(state=DISABLED)
         with open("./version-"+b +".exe","rb") as hashjiaoyan:
             bytes = hashjiaoyan.read()
@@ -1241,6 +1241,7 @@ def in_start():
 lf1 = tkinter.ttk.LabelFrame(root,text="登录信息")
 showteacherinfo = tkinter.ttk.LabelFrame(root,text="教师信息")
 lf_for_students = tkinter.ttk.LabelFrame(root,text="学生信息")
+lf_for_text = tkinter.ttk.LabelFrame(root,text="LOG输出")
 tree1 = tkinter.ttk.Treeview(lf_for_students, columns=('xm', 'zh', 'stuclass', 'stuid'),show='headings') 
 tree1.heading('xm', text='姓名')
 tree1.heading('zh', text='账号')
@@ -1265,13 +1266,14 @@ logoutbutton = tkinter.ttk.Button(root,text="注销", command = log_out)
 do_students_work_button = tkinter.ttk.Button(root,text="完成该账号下所有学生任务", command = lambda:do_students_work(student_all, teacher_cookies, num, teacher_name))
 download_students_xlsx_button = tkinter.ttk.Button(root,text="下载所有学生账号", command = lambda:download_xlsx(teacher_cookies,classroomname))
 reset_allstudents_password_button = tkinter.ttk.Button(root,text="重置该账号下所有学生密码", command = lambda:reset_allstudents_password(student_all, teacher_cookies, num, teacher_name))
-t = scrolledtext.ScrolledText(root, font=('Consolas', 8))	
-t.place(relx = 1,anchor = NE,width=355,height=350)
+t = scrolledtext.ScrolledText(lf_for_text, font=('Consolas', 8))	
+t.pack(fill=BOTH, expand='yes')
 t.tag_config("tag_blue", foreground="blue")
 t.tag_config("tag_red", foreground="red")
 t.tag_config("tag_yellow", backgroun="yellow", foreground="red")
 t.tag_config("tag_green", foreground="green")
-t.insert('end', 'LOG输出\n', "tag_blue")
+#lf_for_text.place(relx = 1,anchor = NE,width=355,height=350)
+#t.insert('end', 'LOG输出\n', "tag_blue")
 
 def callback1(event=None):
     global root
@@ -1287,7 +1289,7 @@ def popup(event):
     menufortext.post(event.x_root, event.y_root)   # post在指定的位置显示弹出菜单
 t.bind("<Button-3>", popup)  
 
-in_start()
+#in_start()
 t.config(state=DISABLED)
 
 #root.wm_attributes('-topmost','true')
