@@ -22,7 +22,7 @@ from xueanquanapi import get_schoolid, get_studentlist
 
 root = Tk()
 #root.attributes("-alpha", 0.8)
-ver = "1.2.5"
+ver = "1.3.0"
 title='安全教育平台助手 - 教师版 '+ver
 root.title(title)
 tmp = open("xueanquan.ico","wb+")
@@ -33,8 +33,8 @@ tmpico = ImageTk.PhotoImage(file="xueanquan.ico")
 root.iconphoto(False ,tmpico)
 os.remove("xueanquan.ico")
 #root.iconbitmap(".\\backup_user\du.ico")
-winWidth = 700
-winHeight = 350
+winWidth = 344
+winHeight = 310
 screenWidth = root.winfo_screenwidth()
 screenHeight = root.winfo_screenheight()
 x = int((screenWidth - winWidth) / 2)
@@ -78,8 +78,8 @@ class myStdout():	# 重定向类
         sys.stderr = self.stderrbak
 
 def back_window_size():
-    winWidth = 700
-    winHeight = 350
+    winWidth = 344
+    winHeight = 310
     screenWidth = root.winfo_screenwidth()
     screenHeight = root.winfo_screenheight()
     x = int((screenWidth - winWidth) / 2)
@@ -1261,7 +1261,7 @@ inp2 = Entry(lf1, relief=GROOVE,textvariable = port)
 port.set('Aa6666')
 inp2.place(x=120, y=80)
 loginbutton = tkinter.ttk.Button(root,text="登录", command = startmain)
-loginbutton.place(x=120,y=200)
+loginbutton.place(x=125,y=200)
 logoutbutton = tkinter.ttk.Button(root,text="注销", command = log_out)
 do_students_work_button = tkinter.ttk.Button(root,text="完成该账号下所有学生任务", command = lambda:do_students_work(student_all, teacher_cookies, num, teacher_name))
 download_students_xlsx_button = tkinter.ttk.Button(root,text="下载所有学生账号", command = lambda:download_xlsx(teacher_cookies,classroomname))
