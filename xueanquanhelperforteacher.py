@@ -18,7 +18,7 @@ import tkinter.filedialog
 from tkinter import scrolledtext
 from fake_useragent import FakeUserAgent
 import hashlib
-from xueanquanapi import get_schoolid, get_studentlist
+from xueanquanapi import get_schoolid, get_studentlist, login, get_students, get_students_xlsx, get_message, get_homework, get_special 
 
 root = Tk()
 #root.attributes("-alpha", 0.8)
@@ -51,7 +51,6 @@ teacher_cookies = 0
 teacher_name = 0
 num = 0
 classroomname = 0
-
 
 main_menu = Menu(root)
 root.config (menu=main_menu)
@@ -155,53 +154,6 @@ def download(name, url, cookies, header={'Connection': 'keep-alive','User-Agent'
     f.close()
     t.config(state=DISABLED)
 
-def login(username, password):
-    '''
-    登陆
-    '''
-    accesstoken = ''
-    serverside = ''
-    userid = ''
-    name = ''
-    plainUserId = ''
-    studentorteacher = ''
-    tip = ''
-    classroomname = ''
-    schoolname = ''
-    url = 'https://appapi.xueanquan.com/usercenter/api/v1/account/PostLogin'
-    headers = {'Host': 'appapi.xueanquan.com',
-               'Content-Type': 'application/json',
-               'Content-Length': '102',
-               #'X-TrackingId':'4e1389ae-51e3-427d-962e-459ff40b44d0',
-               'Connection': 'keep-alive',
-               #'X-EquipmentId': '22CBB69F-D6E4-42F5-B615-F4297D54AE93',
-               'Accept': '*/*',
-               'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 safetreeapp/1.8.6',
-               'Accept-Language': 'zh-Hans-HK;q=1',
-               'Authorization': '',
-               'Accept-Encoding': 'gzip, deflate, br'}
-
-    json = {
-        "Password": password,
-        "EquipmentId": "22CBB69F-D6E4-42F5-B615-F4297D54AE93",
-        "Username": username}
-
-    res = requests.post(url=url, headers=headers, json=json)
-    data = re.findall('"data":(.*?),', res.text)[0]
-    if data == 'null':
-        tip=re.findall('"err_desc":"(.*?)"', res.text)[0]
-        pass
-    else:
-        userid = re.findall('"accessCookie":"(.*?)"', res.text)[0]
-        serverside = re.findall('"webUrl":"(.*?)"', res.text)[0]
-        studentorteacher = re.findall('"regionalName":(.*?),', res.text)[0]
-        name = re.findall('"nickName":"(.*?)"', res.text)[0]
-        accesstoken = re.findall('"accessToken":"(.*?)"', res.text)[0]
-        plainUserId = re.findall('"plainUserId":(.*?),', res.text)[0]
-        classroomname = re.findall('"classroomName":"(.*?)"', res.text)[0]
-        schoolname = re.findall('"schoolName":"(.*?)"', res.text)[0]
-    return accesstoken, serverside, userid, name, plainUserId, studentorteacher, tip, classroomname, schoolname
-
 def log_out():
     global errorcodehas
     global passwordcodetrue
@@ -236,85 +188,6 @@ def log_out():
     lf1.place(x=8, y=8,width=330,height=150)
     loginbutton.place(x=120,y=200)
     root.title(title)
-
-def get_students(cookies):
-    '''
-    获取学生账号，studentid
-    '''
-    url = 'https://guangzhou.xueanquan.com/eduadmin/ClassManagement/ClassManagement'
-    headers = {'Accept': '*//*',
-               'Accept-Encoding': 'gzip, deflate, br',
-               'Accept-Language': 'zh-CN,zh;q=0.9',
-               'Connection': 'keep-alive',
-               'Content-Length': '83',
-               'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-               'Cookie': cookies,
-               'Host': 'guangzhou.xueanquan.com',
-               'Origin': 'https://guangzhou.xueanquan.com',
-               'Referer': 'https://guangzhou.xueanquan.com/EduAdmin/Home/Index',
-               #'sec-ch-ua': '"Not A;Brand";v="99", "Chromium";v="100", "Google Chrome";v="100"',
-               'sec-ch-ua-mobile': '?0',
-               'sec-ch-ua-platform': 'Windows',
-               'Sec-Fetch-Dest': 'empty',
-               'Sec-Fetch-Mode': 'cors',
-               'Sec-Fetch-Site': 'same-origin',
-               'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36',
-               'X-Requested-With': 'XMLHttpRequest'
-               }
-    data = {'status': '',
-            'keywords': '',
-            'pageNum': '1',
-            'numPerPage': '100',
-            'orderField': '',
-            'orderDirection': 'DESC',
-            'TrueName': ''}
-    res = requests.post(url=url, headers=headers, data=data)
-    # print(res.text)
-    student_all = re.findall('target="dbl" rel="(.*?)"', res.text)
-    # print(len(student_all))
-    # print(student_all)
-    # 保存到本地---取消
-    # file_path = './student.txt'
-    # f = open(file_path, 'w')
-    # f.write(str(student_all))
-    # f.close()
-    return student_all
-
-def get_students_xlsx(cookies):
-    url = 'https://guangzhou.xueanquan.com/eduadmin/ClassManagement/ClassManagement'
-    headers = {'Accept': '*//*',
-               'Accept-Encoding': 'gzip, deflate, br',
-               'Accept-Language': 'zh-CN,zh;q=0.9',
-               'Connection': 'keep-alive',
-               'Content-Length': '83',
-               'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-               'Cookie': cookies,
-               'Host': 'guangzhou.xueanquan.com',
-               'Origin': 'https://guangzhou.xueanquan.com',
-               'Referer': 'https://guangzhou.xueanquan.com/EduAdmin/Home/Index',
-               #'sec-ch-ua': '"Not A;Brand";v="99", "Chromium";v="100", "Google Chrome";v="100"',
-               'sec-ch-ua-mobile': '?0',
-               'sec-ch-ua-platform': 'Windows',
-               'Sec-Fetch-Dest': 'empty',
-               'Sec-Fetch-Mode': 'cors',
-               'Sec-Fetch-Site': 'same-origin',
-               'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36',
-               'X-Requested-With': 'XMLHttpRequest'
-               }
-    data = {'status': '',
-            'keywords': '',
-            'pageNum': '1',
-            'numPerPage': '100',
-            'orderField': '',
-            'orderDirection': 'DESC',
-            'TrueName': ''}
-    res = requests.post(url=url, headers=headers, data=data)
-    getxlsxdata = etree.HTML(res.text)
-    getsparexlsx = getxlsxdata.xpath("//a[@class='icon']/@href")
-    getsparexlsxa = str(getsparexlsx)
-    getsparexlsxtext = getsparexlsxa.replace("'", '').replace("[", '').replace("]", '')
-    urlfinally = url.replace('/eduadmin/ClassManagement/ClassManagement', getsparexlsxtext)#.replace('?require-un=true', '' )
-    return urlfinally
     
 def reset_passward(cookie, studentid, num):
     '''
@@ -360,46 +233,6 @@ def reset_passward(cookie, studentid, num):
             reset_passward(cookie, studentid, num)
         else:
             pass
-        
-
-def get_message(userid, accesstoken, plainUserId):
-    '''
-    获取假期安全提醒阅读
-    '''
-    title_all = []
-    messageid_all = []
-    url = 'https://guangdong.xueanquan.com/safeapph5/api/noticeService/getMyReceive?userId={0}&parentSortId=2&beginIndex=0&pageSize=20'.format(
-        userid)
-    # print(url)
-    headers = {'Host': 'guangdong.xueanquan.com',
-               'X-UserId': plainUserId,
-               'Accept-Encoding': 'gzip, deflate, br',
-               'X-TrackingId': '3eb4eae5-d97f-45e0-aedb-3d2c949d3424',
-               'Connection': 'keep-alive',
-               'X-EquipmentId': '22CBB69F-D6E4-42F5-B615-F4297D54AE93',
-               'Accept': '*/*',
-               'Accept-Language': 'zh-Hans-HK;q=1',
-               'Authorization': 'Bearer ' + accesstoken,
-               'X-Comefrom': '20227',
-               'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 safetreeapp/1.8.6'}
-    # print(headers)
-    res = requests.get(url=url, headers=headers)
-    # print(res.text)
-    res1 = res.text.replace('\n', '')
-    message = re.findall('({.*?"messageID":.*?})', res1)
-    # print(message)
-
-    for m in message:
-        if '"isRead": true,' in m:
-            pass
-        else:
-            title = re.findall('"title": "(.*?)",', m)[0]
-            messageid = re.findall('"messageID": (.*?),', m)[0]
-            title_all.append(title)
-            messageid_all.append(messageid)
-    # print(title_all,messageid_all)
-    return title_all, messageid_all
-
 
 def do_message(accesstoken, userid, messageId, TitleText, num):
     '''
@@ -435,40 +268,10 @@ def do_message(accesstoken, userid, messageId, TitleText, num):
         if num < 4:
             t.insert('end', 'ERROR:  第{0}次重试，事不过三！'.format(num), "tag_red")
             num = num + 1
-            do_message(userid, specialId, step, num)
+            do_message(accesstoken, userid, messageId, TitleText, num)
         else:
             errorcodehas = errorcodehas + 1
             pass
-
-
-def get_homework(userid, accesstoken):
-    '''
-    获取学期任务 and 专题任务
-    学生账号，不分专题任务和学期任务接口，可怕
-    '''
-    title_all = []
-    url_all = []
-    cookies = 'ServerSide=https://guangdong.xueanquan.com/;' + 'UserID=' + userid
-    Authorization = 'Bearer ' + accesstoken
-    url = 'https://applet.xueanquan.com/pt/guangdong/safeapph5/api/v1/homework/homeworklist'
-    headers = {'Host': 'applet.xueanquan.com',
-               'Origin': 'https://safeh5.xueanquan.com',
-               'Accept-Encoding': 'gzip, deflate, br',
-               'Cookie': cookies,
-               'Connection': 'keep-alive',
-               'Accept': 'application/json, text/plain, */*',
-               'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 safetreeapp/1.8.6',
-               'Authorization': Authorization,
-               'Referer': 'https://safeh5.xueanquan.com/safeedu/homeworkList'}
-    res = requests.get(url=url, headers=headers)
-    # print(res.text)
-    res1 = res.text.replace('\n', '').replace('  ', '')
-    # print(res1)
-    work_all = re.findall('("linkUrl":.*?),"publishDateTime"', res1)
-    # print(work_all)
-    # 这里安全➕专题都这里、下面运行需要想个办法，分开去do
-    return work_all
-
 
 def do_homework(courseid, gradeid, userid, num):
     '''
@@ -571,58 +374,10 @@ def do_homework(courseid, gradeid, userid, num):
         if num < 4:
             t.insert('end', 'ERROR:  第{0}次重试，事不过三！'.format(num), "tag_red")
             num = num + 1
-            doit_course(courseid, gradeid, cookies, num)
+            do_homework(courseid, gradeid, cookies, num)
         else:
             errorcodehas = errorcodehas + 1
             pass
-
-
-def get_special(url, userid):
-    '''
-    获取专题任务id信息
-    '''
-    try:
-        print('正在获取安全专题信息..........')
-        value1 = ''
-        print('链接1:', url)
-        # cookies = 'ServerSide=https://guangdong.xueanquan.com/;' + 'UserI=' + userid
-        headers = {'User-Agent': FakeUserAgent().random,
-                   #'Cookie': cookies
-                   }
-        res = requests.get(url=url, headers=headers, allow_redirects=True)
-        # res.encoding='utf-8'
-        # print(res.text)
-        value = re.findall("location.replace(.*?);", res.text)[0]
-        # print(value)
-        value1 = value.split("'")[1]
-        url2 = url.replace('index.html', 'message.html').replace('?require-un=true', '' )
-        #print('留言列表:', url2)
-        getsd= requests.get(url=url2, headers=headers)
-        getsddata = etree.HTML(getsd.text)
-        getsparesd = getsddata.xpath("//title[normalize-space()]/text()")
-        getsparesda = str(getsparesd)
-        getsparesdtext = getsparesda.replace("'", '').replace("[", '').replace("]", '')
-        
-
-    except Exception as e:
-        print(e)
-        value1 = value.split('"')[1]
-        
-    finally:
-        # print(value1)
-        url1 = url.replace('index.html', value1)
-        print('链接2:', url1)
-        res1 = requests.get(url=url1, headers=headers)
-        # print(res1.text)
-        # data-specialId ="732"
-        # 处理一下，避免出错
-        res2 = res1.text.replace(' ', '')
-        # print(res2)
-        id_all = re.findall('data-specialId="(.*?)"', res2)[0]
-
-    print('专题id:  ', id_all)
-    print('备用专题id:  ',getsparesdtext)
-    return id_all,getsparesdtext;
 
 def do_special(userid, specialId, sparespecialId, step, num):
     '''
@@ -679,7 +434,6 @@ def do_special(userid, specialId, sparespecialId, step, num):
             errorcodehas = errorcodehas+1
             pass
 
-
 def do_holiday(userid, schoolYear, semester, step):
     '''
     完成寒暑假任务专题
@@ -717,7 +471,7 @@ def do_holiday(userid, schoolYear, semester, step):
         if num < 4:
             t.insert('end', 'ERROR:  第{0}次重试，事不过三！'.format(num), "tag_red")
             num = num + 1
-            do_special(userid, specialId, step, num)
+            do_holiday(userid, schoolYear, semester, step)
         else:
             errorcodehas = errorcodehas+1
             pass
@@ -805,7 +559,6 @@ def main(username, password):
                     sparespecialId = getsparesdtext
                     do_special(userid, specialId, sparespecialId, step=1, num=num)
                     do_special(userid, specialId, sparespecialId, step=2, num=num)
-
 
 def do_students_work(student_all, teacher_cookies, num, teacher_name):
     yes_or_no = tkinter.messagebox.askokcancel('你需要了解的事','使用该功能会将所有学生账号密码修改为默认密码\n您是否继续进行该操作?')
@@ -980,8 +733,8 @@ def startmain():
                 lf_for_students.place(x=340, y=8,width=403,height=340)
                 lf_for_text.place(x=745, y=8,width=353,height=340)
                 logoutbutton.place(x=230,y=210)
-                Schoolidtext, Gradeidtext, Classroomidtext, Semesteridtext, UserTypeidtext, OrderColumnidtext, CurrentPageidtext = get_schoolid(teacher_cookies)
-                get_all_list = get_studentlist(teacher_cookies, Schoolidtext, Gradeidtext, Classroomidtext, Semesteridtext, UserTypeidtext, OrderColumnidtext, CurrentPageidtext)
+                Schoolidtext, Gradeidtext, Classroomidtext, Semesteridtext, UserTypeidtext, OrderColumnidtext = get_schoolid(teacher_cookies)
+                get_all_list = get_studentlist(teacher_cookies, Schoolidtext, Gradeidtext, Classroomidtext, Semesteridtext, UserTypeidtext, OrderColumnidtext)
                 for all_list in get_all_list:
                     tree1.insert('', END, values=all_list)
                 #t.insert("end", name + " 该账号下的所有任务已完成 " + "\n", "tag_3")

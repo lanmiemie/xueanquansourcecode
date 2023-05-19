@@ -1,6 +1,56 @@
 import requests
 from lxml import etree
 import re
+from fake_useragent import FakeUserAgent
+
+def login(username, password):
+    '''
+    登陆
+    accesstoken (访问令牌), serverside (地区域名), userid (用户ID), name (姓名), plainUserId, studentorteacher (判断是学生还是教师), tip (登陆失败时获取返回提示), classroomname (班别), schoolname (学校名字)
+    来自 MissedYyang
+    '''
+    accesstoken = ''
+    serverside = ''
+    userid = ''
+    name = ''
+    plainUserId = ''
+    studentorteacher = ''
+    tip = ''
+    classroomname = ''
+    schoolname = ''
+    url = 'https://appapi.xueanquan.com/usercenter/api/v1/account/PostLogin'
+    headers = {'Host': 'appapi.xueanquan.com',
+               'Content-Type': 'application/json',
+               'Content-Length': '102',
+               #'X-TrackingId':'4e1389ae-51e3-427d-962e-459ff40b44d0',
+               'Connection': 'keep-alive',
+               #'X-EquipmentId': '22CBB69F-D6E4-42F5-B615-F4297D54AE93',
+               'Accept': '*/*',
+               'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 safetreeapp/1.8.6',
+               'Accept-Language': 'zh-Hans-HK;q=1',
+               'Authorization': '',
+               'Accept-Encoding': 'gzip, deflate, br'}
+
+    json = {
+        "Password": password,
+        "EquipmentId": "22CBB69F-D6E4-42F5-B615-F4297D54AE93",
+        "Username": username}
+
+    res = requests.post(url=url, headers=headers, json=json)
+    data = re.findall('"data":(.*?),', res.text)[0]
+    if data == 'null':
+        tip=re.findall('"err_desc":"(.*?)"', res.text)[0]
+        pass
+    else:
+        userid = re.findall('"accessCookie":"(.*?)"', res.text)[0]
+        serverside = re.findall('"webUrl":"(.*?)"', res.text)[0]
+        studentorteacher = re.findall('"regionalName":(.*?),', res.text)[0]
+        name = re.findall('"nickName":"(.*?)"', res.text)[0]
+        accesstoken = re.findall('"accessToken":"(.*?)"', res.text)[0]
+        plainUserId = re.findall('"plainUserId":(.*?),', res.text)[0]
+        classroomname = re.findall('"classroomName":"(.*?)"', res.text)[0]
+        schoolname = re.findall('"schoolName":"(.*?)"', res.text)[0]
+    return accesstoken, serverside, userid, name, plainUserId, studentorteacher, tip, classroomname, schoolname
 
 def get_schoolid(cookies):
     '''
@@ -46,14 +96,13 @@ def get_schoolid(cookies):
     getOrderColumnid = xpathhtml.xpath("//input[@id='OrderColumn']/@value")
     OrderColumnid = str(getOrderColumnid).replace("'", '').replace("[", '').replace("]", '')
     
-    getCurrentPageid = xpathhtml.xpath("//input[@id='CurrentPage']/@value")
-    CurrentPageid = str(getCurrentPageid).replace("'", '').replace("[", '').replace("]", '')
-    
-    return Schoolid, Gradeid, Classroomid, Semesterid, UserTypeid, OrderColumnid, CurrentPageid
+    return Schoolid, Gradeid, Classroomid, Semesterid, UserTypeid, OrderColumnid
 
-def get_studentlist(cookies, Schoolid, Gradeid, Classroomid, Semesterid, UserTypeid, OrderColumnid, CurrentPageid):
+def get_studentlist(cookies, Schoolid, Gradeid, Classroomid, Semesterid, UserTypeid, OrderColumnid):
     '''
-    获取获取学生姓名和账号, ID
+    教师获取学生姓名和账号, ID
+    以 List 的形式输出
+    {'姓名', '账号', '班别', '学生ID'}
     '''
     url = 'https://guangdong.xueanquan.com/safeapph5/api/safeEduCardinalData/getAppUserlist'
 
@@ -101,3 +150,204 @@ def get_studentlist(cookies, Schoolid, Gradeid, Classroomid, Semesterid, UserTyp
 
     return all_list
 
+
+def get_students(cookies):
+    '''
+    教师单独学生账号，studentid
+    （只返回学生账号）
+    来自 MissedYyang
+    以 List 的形式返回
+    '''
+    url = 'https://guangzhou.xueanquan.com/eduadmin/ClassManagement/ClassManagement'
+    headers = {'Accept': '*//*',
+               'Accept-Encoding': 'gzip, deflate, br',
+               'Accept-Language': 'zh-CN,zh;q=0.9',
+               'Connection': 'keep-alive',
+               'Content-Length': '83',
+               'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+               'Cookie': cookies,
+               'Host': 'guangzhou.xueanquan.com',
+               'Origin': 'https://guangzhou.xueanquan.com',
+               'Referer': 'https://guangzhou.xueanquan.com/EduAdmin/Home/Index',
+               #'sec-ch-ua': '"Not A;Brand";v="99", "Chromium";v="100", "Google Chrome";v="100"',
+               'sec-ch-ua-mobile': '?0',
+               'sec-ch-ua-platform': 'Windows',
+               'Sec-Fetch-Dest': 'empty',
+               'Sec-Fetch-Mode': 'cors',
+               'Sec-Fetch-Site': 'same-origin',
+               'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36',
+               'X-Requested-With': 'XMLHttpRequest'
+               }
+    data = {'status': '',
+            'keywords': '',
+            'pageNum': '1',
+            'numPerPage': '100',
+            'orderField': '',
+            'orderDirection': 'DESC',
+            'TrueName': ''}
+    res = requests.post(url=url, headers=headers, data=data)
+    # print(res.text)
+    student_all = re.findall('target="dbl" rel="(.*?)"', res.text)
+    # print(len(student_all))
+    # print(student_all)
+    # 保存到本地---取消
+    # file_path = './student.txt'
+    # f = open(file_path, 'w')
+    # f.write(str(student_all))
+    # f.close()
+    return student_all
+
+def get_students_xlsx(cookies):
+    '''
+    教师获取学生账号表格下载地址
+    '''
+    url = 'https://guangzhou.xueanquan.com/eduadmin/ClassManagement/ClassManagement'
+    headers = {'Accept': '*//*',
+               'Accept-Encoding': 'gzip, deflate, br',
+               'Accept-Language': 'zh-CN,zh;q=0.9',
+               'Connection': 'keep-alive',
+               'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+               'Cookie': cookies,
+               'Host': 'guangzhou.xueanquan.com',
+               'Origin': 'https://guangzhou.xueanquan.com',
+               'Referer': 'https://guangzhou.xueanquan.com/EduAdmin/Home/Index',
+               #'sec-ch-ua': '"Not A;Brand";v="99", "Chromium";v="100", "Google Chrome";v="100"',
+               'sec-ch-ua-mobile': '?0',
+               'sec-ch-ua-platform': 'Windows',
+               'Sec-Fetch-Dest': 'empty',
+               'Sec-Fetch-Mode': 'cors',
+               'Sec-Fetch-Site': 'same-origin',
+               'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36',
+               'X-Requested-With': 'XMLHttpRequest'
+               }
+    data = {'status': '',
+            'keywords': '',
+            'pageNum': '1',
+            'numPerPage': '2000',
+            'orderField': '',
+            'orderDirection': 'DESC',
+            'TrueName': ''}
+    res = requests.post(url=url, headers=headers, data=data)
+    getxlsxdata = etree.HTML(res.text)
+    getsparexlsx = getxlsxdata.xpath("//a[@class='icon']/@href")
+    getsparexlsxa = str(getsparexlsx)
+    getsparexlsxtext = getsparexlsxa.replace("'", '').replace("[", '').replace("]", '')
+    urlfinally = url.replace('/eduadmin/ClassManagement/ClassManagement', getsparexlsxtext)
+
+    return urlfinally
+    
+def get_message(userid, accesstoken, plainUserId):
+    '''
+    获取假期安全提醒阅读
+    来自 MissedYyang
+    '''
+    title_all = []
+    messageid_all = []
+    url = 'https://guangdong.xueanquan.com/safeapph5/api/noticeService/getMyReceive?userId={0}&parentSortId=2&beginIndex=0&pageSize=20'.format(
+        userid)
+    # print(url)
+    headers = {'Host': 'guangdong.xueanquan.com',
+               'X-UserId': plainUserId,
+               'Accept-Encoding': 'gzip, deflate, br',
+               'X-TrackingId': '3eb4eae5-d97f-45e0-aedb-3d2c949d3424',
+               'Connection': 'keep-alive',
+               'X-EquipmentId': '22CBB69F-D6E4-42F5-B615-F4297D54AE93',
+               'Accept': '*/*',
+               'Accept-Language': 'zh-Hans-HK;q=1',
+               'Authorization': 'Bearer ' + accesstoken,
+               'X-Comefrom': '20227',
+               'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 safetreeapp/1.8.6'}
+    # print(headers)
+    res = requests.get(url=url, headers=headers)
+    # print(res.text)
+    res1 = res.text.replace('\n', '')
+    message = re.findall('({.*?"messageID":.*?})', res1)
+    # print(message)
+
+    for m in message:
+        if '"isRead": true,' in m:
+            pass
+        else:
+            title = re.findall('"title": "(.*?)",', m)[0]
+            messageid = re.findall('"messageID": (.*?),', m)[0]
+            title_all.append(title)
+            messageid_all.append(messageid)
+    
+    return title_all, messageid_all
+
+def get_homework(userid, accesstoken):
+    '''
+    获取学期任务 and 专题任务
+    学生账号，不分专题任务和学期任务接口，可怕
+    来自 MissedYyang
+    '''
+    title_all = []
+    url_all = []
+    cookies = 'ServerSide=https://guangdong.xueanquan.com/;' + 'UserID=' + userid
+    Authorization = 'Bearer ' + accesstoken
+    url = 'https://applet.xueanquan.com/pt/guangdong/safeapph5/api/v1/homework/homeworklist'
+    headers = {'Host': 'applet.xueanquan.com',
+               'Origin': 'https://safeh5.xueanquan.com',
+               'Accept-Encoding': 'gzip, deflate, br',
+               'Cookie': cookies,
+               'Connection': 'keep-alive',
+               'Accept': 'application/json, text/plain, */*',
+               'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 safetreeapp/1.8.6',
+               'Authorization': Authorization,
+               'Referer': 'https://safeh5.xueanquan.com/safeedu/homeworkList'}
+    res = requests.get(url=url, headers=headers)
+    # print(res.text)
+    res1 = res.text.replace('\n', '').replace('  ', '')
+    # print(res1)
+    work_all = re.findall('("linkUrl":.*?),"publishDateTime"', res1)
+    # print(work_all)
+    # 这里安全➕专题都这里、下面运行需要想个办法，分开去do
+    return work_all
+
+def get_special(url, userid):
+    '''
+    获取专题任务id信息
+    来自 MissedYyang
+    '''
+    try:
+        print('正在获取安全专题信息..........')
+        value1 = ''
+        print('链接1:', url)
+        # cookies = 'ServerSide=https://guangdong.xueanquan.com/;' + 'UserI=' + userid
+        headers = {'User-Agent': FakeUserAgent().random,
+                   #'Cookie': cookies
+                   }
+        res = requests.get(url=url, headers=headers, allow_redirects=True)
+        # res.encoding='utf-8'
+        # print(res.text)
+        value = re.findall("location.replace(.*?);", res.text)[0]
+        # print(value)
+        value1 = value.split("'")[1]
+        # ↓ 获取留言列表
+        url2 = url.replace('index.html', 'message.html').replace('?require-un=true', '' )
+        getsd= requests.get(url=url2, headers=headers)
+        getsddata = etree.HTML(getsd.text)
+        # 使用留言列表来获取 备用 Special ID 
+        getsparesd = getsddata.xpath("//title[normalize-space()]/text()")
+        getsparesda = str(getsparesd)
+        getsparesdtext = getsparesda.replace("'", '').replace("[", '').replace("]", '')
+        
+    except Exception as e:
+        print(e)
+        value1 = value.split('"')[1]
+        
+    finally:
+        # print(value1)
+        url1 = url.replace('index.html', value1)
+        print('链接2:', url1)
+        res1 = requests.get(url=url1, headers=headers)
+        # print(res1.text)
+        # data-specialId ="732"
+        res2 = res1.text.replace(' ', '')
+        # print(res2)
+        id_all = re.findall('data-specialId="(.*?)"', res2)[0]
+
+    print('专题id:  ', id_all)
+    print('备用专题id:  ',getsparesdtext)
+
+    return id_all, getsparesdtext
