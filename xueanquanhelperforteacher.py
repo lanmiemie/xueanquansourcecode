@@ -740,6 +740,7 @@ def startmain():
                 #t.insert("end", name + " 该账号下的所有任务已完成 " + "\n", "tag_3")
                 #t.config(state=DISABLED)
                 #tkinter.messagebox.showinfo(title='提示', message="全部任务都完成啦！\n如恁不相信本助手的完成能力\n恁可以上账号后台观看记录")
+                tree1.bind('<ButtonRelease-1>', adbc)
                 t.insert("end", "获取完毕" + "\n", "tag_1")
                 mystd.restoreStd()
                 # sys.exit()
@@ -757,7 +758,28 @@ def startmain():
             mystd.restoreStd()
             root.title(title)
 
-#def get_treeview_students_information():
+def get_treeview_students_information():
+    treeview_info = Toplevel()
+    treeview_info.title('提示')
+    tmp = open("xueanquan.ico","wb+")
+    tmp.write(base64.b64decode(img))
+    tmp.close()
+    global tmpico
+    tmpico = ImageTk.PhotoImage(file="xueanquan.ico")
+    treeview_info.iconphoto(False ,tmpico)
+    os.remove("xueanquan.ico")
+    winWidth = 500
+    winHeight = 500
+    screenWidth = root.winfo_screenwidth()
+    screenHeight = root.winfo_screenheight()
+    x = int((screenWidth - winWidth) / 2)
+    y = int((screenHeight - winHeight) / 2)
+    treeview_info.geometry("%sx%s+%s+%s" % (winWidth, winHeight, x, y))
+    treeview_info.resizable(0, 0)
+    id_list = tree1.selection()
+    for item in id_list:
+        name,id1,classroomname1,studentid1 = tree1.item(item)["values"]
+        show_name = Label()
 
 
 def updataprogram():
@@ -860,7 +882,7 @@ def about():
     y = int((screenHeight - winHeight) / 2)
     top.geometry("%sx%s+%s+%s" % (winWidth, winHeight, x, y))
     top.resizable(0, 0)
-    CREATE_NO_WINDOW = 0x08000000
+    #CREATE_NO_WINDOW = 0x08000000
 
     header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36 Edg/99.0.1150.39'}
     about = 'https://xueanquan-fatdeadpanda.netlify.app/getprogram/about'
