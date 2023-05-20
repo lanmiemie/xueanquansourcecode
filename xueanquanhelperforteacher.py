@@ -18,7 +18,7 @@ import tkinter.filedialog
 from tkinter import scrolledtext
 from fake_useragent import FakeUserAgent
 import hashlib
-from xueanquanapi import get_schoolid, get_studentlist, login, get_students, get_students_xlsx, get_message, get_homework, get_special 
+from xueanquanapi import teacher_get_schoolid, teacher_get_studentlist, login, teacher_get_students, teacher_get_students_xlsx, get_message, get_homework, get_special, teacher_get_special_list
 
 root = Tk()
 #root.attributes("-alpha", 0.8)
@@ -721,7 +721,7 @@ def startmain():
                 x = int((screenWidth - winWidth) / 2)
                 y = int((screenHeight - winHeight) / 2)
                 root.geometry("%sx%s+%s+%s" % (winWidth, winHeight, x, y))
-                student_all = get_students(teacher_cookies)
+                student_all = teacher_get_students(teacher_cookies)
                 showteacherinfo.place(x=8, y=8,width=330,height=150)
                 Label(showteacherinfo, text='教师姓名: '+str(teacher_name)).place(x=40,y=10)
                 Label(showteacherinfo, text='所在学校: '+str(schoolname)).place(x=40,y=35)
@@ -733,8 +733,8 @@ def startmain():
                 lf_for_students.place(x=340, y=8,width=403,height=340)
                 lf_for_text.place(x=745, y=8,width=353,height=340)
                 logoutbutton.place(x=230,y=210)
-                Schoolidtext, Gradeidtext, Classroomidtext, Semesteridtext, UserTypeidtext, OrderColumnidtext = get_schoolid(teacher_cookies)
-                get_all_list = get_studentlist(teacher_cookies, Schoolidtext, Gradeidtext, Classroomidtext, Semesteridtext, UserTypeidtext, OrderColumnidtext)
+                Schoolidtext, Gradeidtext, Classroomidtext, Semesteridtext, UserTypeidtext, OrderColumnidtext = teacher_get_schoolid(teacher_cookies)
+                get_all_list = teacher_get_studentlist(teacher_cookies, Schoolidtext, Gradeidtext, Classroomidtext, Semesteridtext, UserTypeidtext, OrderColumnidtext)
                 for all_list in get_all_list:
                     tree1.insert('', END, values=all_list)
                 #t.insert("end", name + " 该账号下的所有任务已完成 " + "\n", "tag_3")
@@ -841,7 +841,7 @@ def download_xlsx(cookies,classroomname):
         return 0
     gettime = time.strftime('%Y-%m-%d--%H-%M-%S',time.localtime())
     path="./"+str(classroomname)+"-学生信息-"+str(gettime) +".xls"
-    xlsxurl = get_students_xlsx(teacher_cookies)
+    xlsxurl = teacher_get_students_xlsx(teacher_cookies)
     try:
         download(path, xlsxurl ,cookies)
     except Exception as e:

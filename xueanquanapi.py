@@ -2,6 +2,7 @@ import requests
 from lxml import etree
 import re
 from fake_useragent import FakeUserAgent
+import datetime
 
 def login(username, password):
     '''
@@ -52,7 +53,7 @@ def login(username, password):
         schoolname = re.findall('"schoolName":"(.*?)"', res.text)[0]
     return accesstoken, serverside, userid, name, plainUserId, studentorteacher, tip, classroomname, schoolname
 
-def get_schoolid(cookies):
+def teacher_get_schoolid(cookies):
     '''
     获取教师各类ID, 例: Schoolid, Gradeid, Classroomid.等.....
     '''
@@ -98,7 +99,7 @@ def get_schoolid(cookies):
     
     return Schoolid, Gradeid, Classroomid, Semesterid, UserTypeid, OrderColumnid
 
-def get_studentlist(cookies, Schoolid, Gradeid, Classroomid, Semesterid, UserTypeid, OrderColumnid):
+def teacher_get_studentlist(cookies, Schoolid, Gradeid, Classroomid, Semesterid, UserTypeid, OrderColumnid):
     '''
     教师获取学生姓名和账号, ID
     以 List 的形式输出
@@ -151,7 +152,7 @@ def get_studentlist(cookies, Schoolid, Gradeid, Classroomid, Semesterid, UserTyp
     return all_list
 
 
-def get_students(cookies):
+def teacher_get_students(cookies):
     '''
     教师单独学生账号，studentid
     （只返回学生账号）
@@ -197,7 +198,7 @@ def get_students(cookies):
     # f.close()
     return student_all
 
-def get_students_xlsx(cookies):
+def teacher_get_students_xlsx(cookies):
     '''
     教师获取学生账号表格下载地址
     '''
@@ -351,3 +352,45 @@ def get_special(url, userid):
     print('备用专题id:  ',getsparesdtext)
 
     return id_all, getsparesdtext
+
+def teacher_get_special_list(cookie):
+    '''
+    教师获取专题任务信息
+    以 List 的形式输出
+    {'专题名', '截止时间', '完成人数', '应完成人数', '完成百分比', '专题状态'}
+    '''
+    all_special_list = list()
+    get_today = datetime.date.today()
+    url = 'https://applet.xueanquan.com/pt/guangdong/safeapph5/api/safeEduScore/getSpecailProgress?semester=3&schoolYear='+str(get_today.year)
+    headers = {'Host': 'applet.xueanquan.com',
+               'Origin': 'https://safeh5.xueanquan.com',
+               'Accept-Encoding': 'gzip, deflate, br',
+               'Cookie': cookie,
+               'Connection': 'keep-alive',
+               'Accept': 'application/json, text/plain, */*',
+               'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 safetreeapp/1.8.6',
+               'Referer': 'https://safeh5.xueanquan.com'}
+    res = requests.get(url=url, headers=headers)
+    #print(res.text)
+
+    specialName_all = re.findall('"specialName": (.*?),', res.text)
+    endTime_all = re.findall('"endTime": (.*?),', res.text)
+    completePeople_all = re.findall('"completePeople": (.*?),', res.text)
+    shouldCompletePeople_all = re.findall('"shouldCompletePeople": (.*?),', res.text)
+    completeRate_all = re.findall('"completeRate": (.*?),', res.text)
+    specailStatus_all = re.findall('"specailStatus": (\d)', res.text)
+
+    for specialname,endtime,completepeople,shouldcompletepeople,completerate,specailstatus in zip(specialName_all,endTime_all,completePeople_all,shouldCompletePeople_all,completeRate_all,specailStatus_all):
+        totallist = "list%s"%len(specialName_all)
+        finally_specialname = str(specialname).replace('"','')
+        finally_endtime = re.findall('\d{4}-\d{2}-\d{2}',endtime)
+        if specailstatus == '1':
+            finally_specailstatus = '未截止'
+            totallist = [finally_specialname,finally_endtime,completepeople,shouldcompletepeople,completerate,finally_specailstatus]
+            all_special_list.append(totallist)
+        else:
+            finally_specailstatus = '已截止'
+            totallist = [finally_specialname,finally_endtime,completepeople,shouldcompletepeople,completerate,finally_specailstatus]
+            all_special_list.append(totallist)
+
+    return all_special_list

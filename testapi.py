@@ -1,14 +1,18 @@
+from itertools import chain, zip_longest
 import requests
 from lxml import etree
 import re
 from fake_useragent import FakeUserAgent
 import datetime
 
+
 cookies = 'ServerSide=https://guangdong.xueanquan.com/;UserID=6B0A87E07EB878EC437CABB6803CBC17'
 
-def get_special_list(cookie):
+def teacher_get_special_list(cookie):
     '''
-    获取学期任务 and 专题任务
+    教师获取专题任务信息
+    以 List 的形式输出
+    {'专题名', '截止时间', '完成人数', '应完成人数', '完成百分比', '专题状态'}
     学生账号，不分专题任务和学期任务接口，可怕
     '''
     all_special_list = list()
@@ -30,19 +34,20 @@ def get_special_list(cookie):
     completePeople_all = re.findall('"completePeople": (.*?),', res.text)
     shouldCompletePeople_all = re.findall('"shouldCompletePeople": (.*?),', res.text)
     completeRate_all = re.findall('"completeRate": (.*?),', res.text)
-    specailStatus_all = re.findall('"specailStatus": (.*?),', res.text)
+    specailStatus_all = re.findall('"specailStatus": (\d)', res.text)
 
-    #print(specialName_all,endTime_all,completePeople_all,shouldCompletePeople_all,completeRate_all,specailStatus_all)
-    print(len(specialName_all))
+    for specialname,endtime,completepeople,shouldcompletepeople,completerate,specailstatus in zip(specialName_all,endTime_all,completePeople_all,shouldCompletePeople_all,completeRate_all,specailStatus_all):
+        totallist = "list%s"%len(specialName_all)
+        if specailstatus == '1':
+            finally_specailstatus = '未截止'
+            totallist = [specialname,endtime,completepeople,shouldcompletepeople,completerate,finally_specailstatus]
+            all_special_list.append(totallist)
+        else:
+            finally_specailstatus = '已截止'
+            totallist = [specialname,endtime,completepeople,shouldcompletepeople,completerate,finally_specailstatus]
+            all_special_list.append(totallist)
 
-    testa = zip(specialName_all,endTime_all,completePeople_all,shouldCompletePeople_all,completeRate_all,specailStatus_all)
-    print()
+    return all_special_list
 
-    for specialName,endTime,completePeople,shouldCompletePeople,completeRate,specailStatus in testa:
-        totallist = "list%s"%str(len(specialName_all))
-        totallist = [specialName,endTime,completePeople,shouldCompletePeople,completeRate,specailStatus]
-        print(totallist)
-        all_special_list.append(totallist)
 
-get_special_list(cookies)
 
