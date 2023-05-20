@@ -779,7 +779,8 @@ def get_treeview_students_information():
     id_list = tree1.selection()
     for item in id_list:
         name,id1,classroomname1,studentid1 = tree1.item(item)["values"]
-        show_name = Label()
+        lf_show_student_information = tkinter.ttk.LabelFrame(treeview_info,text="学生信息")
+        lf_show_student_information.
 
 
 def updataprogram():
