@@ -50,6 +50,7 @@ def get_treeview_students_information():
     treeview_info.title('提示')
     winWidth = 400
     winHeight = 200
+    num = 1
     screenWidth = root.winfo_screenwidth()
     screenHeight = root.winfo_screenheight()
     x = int((screenWidth - winWidth) / 2)
@@ -58,10 +59,12 @@ def get_treeview_students_information():
     treeview_info.resizable(0, 0)
     lf_show_student_information = tkinter.ttk.LabelFrame(treeview_info,text="学生信息")
     lf_show_student_information.place(x=100, y=8,width=200,height=100)
-    Label(lf_show_student_information,text='姓名:').place(x=10,y=2)
-    Label(lf_show_student_information,text='账号:').place(x=110,y=2)
-    Label(lf_show_student_information,text='班级:').place(x=10,y=120)
-    Label(lf_show_student_information,text='学生ID:').place(x=50,y=120)
+    Label(lf_show_student_information,text='姓名: ').place(x=10,y=2)
+    Label(lf_show_student_information,text='班级: ').place(x=10,y=25)
+    Label(lf_show_student_information,text='账号: ').place(x=10,y=48)
+
+    tkinter.ttk.Button(treeview_info,text='重置该学生密码',command=treeview_teacher_get_special_list).place(x=60,y=140)
+    tkinter.ttk.Button(treeview_info,text='一键完成所有任务',command=treeview_teacher_get_special_list).place(x=230,y=140)
 
 get_treeview_students_information()
 treeview_teacher_get_special_list()
