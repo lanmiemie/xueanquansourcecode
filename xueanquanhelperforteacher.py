@@ -221,7 +221,7 @@ def reset_passward(cookie, studentid, num, in_treeview):
         message = re.findall('"message":"(.*?)"', res.text)[0]
         if str('"statusCode":"200"') in res.text:
             if str(in_treeview) == 'YES':
-                tkinter.messagebox.showinfo('成功','成功重置该学生密码')
+                tkinter.messagebox.showinfo('成功','成功重置该学生密码\n\n'+ message)
             else:
                 t.insert('end', 'YES: '+ message + '\n', "tag_green")
         else:
@@ -482,7 +482,8 @@ def do_holiday(userid, schoolYear, semester, step):
             errorcodehas = errorcodehas+1
             pass
 
-def main(username, password, in_treeview):
+def main(in_treeview, username, password):
+    mystd = myStdout()
     num = 1
     global errorcodehas
     #global t
@@ -567,7 +568,9 @@ def main(username, password, in_treeview):
                     do_special(userid, specialId, sparespecialId, step=2, num=num)
     if str(in_treeview) == 'YES':
         tkinter.messagebox.showinfo('完成','请回到主窗口查看是否完成.')
+        mystd.restoreStd()
     else:
+        mystd.restoreStd()
         pass
     
 
@@ -748,10 +751,49 @@ def startmain():
                 get_all_list = teacher_get_studentlist(teacher_cookies, Schoolidtext, Gradeidtext, Classroomidtext, Semesteridtext, UserTypeidtext, OrderColumnidtext)
                 for all_list in get_all_list:
                     tree1.insert('', END, values=all_list)
+                def get_treeview_students_information(self):
+                    treeview_info = Toplevel()
+                    treeview_info.title('提示')
+                    winWidth = 400
+                    winHeight = 200
+                    num = 1
+                    screenWidth = root.winfo_screenwidth()
+                    screenHeight = root.winfo_screenheight()
+                    x = int((screenWidth - winWidth) / 2)
+                    y = int((screenHeight - winHeight) / 2)
+                    treeview_info.geometry("%sx%s+%s+%s" % (winWidth, winHeight, x, y))
+                    treeview_info.resizable(0, 0)
+                    lf_show_student_information = tkinter.ttk.LabelFrame(treeview_info,text="学生信息")
+                    lf_show_student_information.place(x=100, y=8,width=200,height=100)
+                    id_list = tree1.selection()
+                    finally_studentid = ''
+                    for item in id_list:
+                        name1,id1,classroomname1,studentid1 = tree1.item(item)["values"]
+                        Label(lf_show_student_information,text='姓名: '+ name1).place(x=10,y=2)
+                        Label(lf_show_student_information,text='班级: '+ classroomname1).place(x=10,y=25)
+                        Label(lf_show_student_information,text='账号: '+ id1).place(x=10,y=48)
+                        finally_studentid = studentid1
+                        finally_id = id1
+
+                    in_treeview = 'YES'
+                    def for_one_student_do_work(self,studentid,num):
+                        yes_or_no = tkinter.messagebox.askokcancel('你需要了解的事','使用该功能会将该学生账号密码修改为默认密码\n您是否继续进行该操作?')
+                        if yes_or_no == False:
+                            return 0
+                        global errorcodehas
+                        #in_treeview = 'NO'
+                        t.delete("1.0","end")
+                        reset_passward(teacher_cookies,finally_studentid,num,in_treeview='NO')
+                        main(in_treeview, username=finally_id, password="Aa6666"+finally_id)
+
+                    tkinter.ttk.Button(treeview_info,text='重置该学生密码',command=lambda:reset_passward(teacher_cookies,finally_studentid,num,in_treeview)).place(x=60,y=140)
+                    tkinter.ttk.Button(treeview_info,text='一键完成所有任务',command=lambda:for_one_student_do_work(teacher_cookies,finally_studentid,num)).place(x=230,y=140)
+                def start_treeview_students_information():
+                    get_treeview_students_information()
                 #t.insert("end", name + " 该账号下的所有任务已完成 " + "\n", "tag_3")
                 #t.config(state=DISABLED)
                 #tkinter.messagebox.showinfo(title='提示', message="全部任务都完成啦！\n如恁不相信本助手的完成能力\n恁可以上账号后台观看记录")
-                tree1.bind('<ButtonRelease-1>', lambda:get_treeview_students_information(teacher_cookies))
+                tree1.bind('<ButtonRelease-1>', get_treeview_students_information)
                 t.insert("end", "获取完毕" + "\n", "tag_1")
                 mystd.restoreStd()
                 # sys.exit()
@@ -768,45 +810,6 @@ def startmain():
             tkinter.messagebox.showerror(title='无法登录', message=str(tip))
             mystd.restoreStd()
             root.title(title)
-
-def get_treeview_students_information(cookie):
-    treeview_info = Toplevel()
-    treeview_info.title('提示')
-    winWidth = 400
-    winHeight = 200
-    num = 1
-    screenWidth = root.winfo_screenwidth()
-    screenHeight = root.winfo_screenheight()
-    x = int((screenWidth - winWidth) / 2)
-    y = int((screenHeight - winHeight) / 2)
-    treeview_info.geometry("%sx%s+%s+%s" % (winWidth, winHeight, x, y))
-    treeview_info.resizable(0, 0)
-    lf_show_student_information = tkinter.ttk.LabelFrame(treeview_info,text="学生信息")
-    lf_show_student_information.place(x=100, y=8,width=200,height=100)
-    id_list = tree1.selection()
-    finally_studentid = ''
-    for item in id_list:
-        name1,id1,classroomname1,studentid1 = tree1.item(item)["values"]
-        Label(lf_show_student_information,text='姓名: '+ name1).place(x=10,y=2)
-        Label(lf_show_student_information,text='班级: '+ classroomname1).place(x=10,y=25)
-        Label(lf_show_student_information,text='账号: '+ id1).place(x=10,y=48)
-        finally_studentid = studentid1
-        finally_id = id1
-
-    in_treeview = 'YES'
-    def for_one_student_do_work(cookie,studentid,num):
-        yes_or_no = tkinter.messagebox.askokcancel('你需要了解的事','使用该功能会将该学生账号密码修改为默认密码\n您是否继续进行该操作?')
-        if yes_or_no == False:
-            return 0
-        global errorcodehas
-        in_treeview = 'NO'
-        reset_passward(teacher_cookies,finally_studentid,num,in_treeview)
-        main(username=finally_id, password="Aa6666"+finally_id)
-
-
-    tkinter.ttk.Button(treeview_info,text='重置该学生密码',command=lambda:reset_passward(teacher_cookies,finally_studentid,num,in_treeview)).place(x=60,y=140)
-    tkinter.ttk.Button(treeview_info,text='一键完成所有任务',command=lambda:for_one_student_do_work(cookie,studentid,num)).place(x=230,y=140)
-
 
 def updataprogram():
     try:
