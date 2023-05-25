@@ -605,9 +605,9 @@ def do_students_work(student_all, teacher_cookies, num, teacher_name):
         print('该账号有 '+str(students_len)+' 个学生, 正在执行第 ' + str(do_students_num) + ' 个')
         t.insert("end", '正在运行,账号：{}-----'.format(student_name) + "\n", "tag_1")
         print('正在运行,重置学生密码-----')
-        reset_passward(teacher_cookies, student_id, num)
+        reset_passward(teacher_cookies, student_id, num ,in_treeview='NO')
         #t.insert("end", "\n")
-        main(username=student_name, password="Aa6666"+student_name)
+        main(in_treeview='NO', username=student_name, password="Aa6666"+student_name)
         #time.sleep(5)
     if errorcodehas == 0:
         t.insert("end", str(teacher_name) + " 该老师账号下的所有任务已完成 " + "\n", "tag_3")
@@ -656,7 +656,7 @@ def reset_allstudents_password(student_all, teacher_cookies, num, teacher_name):
         #t.insert("end", '正在重置密码,账号：{}-----'.format(student_name) + "\n", "tag_1")
         print('该账号有 '+str(students_len)+' 个学生, 正在重置第 ' + str(reset_students_password_num) + ' 个')
         print('正在重置密码,账号：{}-----'.format(student_name) + "\n")
-        reset_passward(teacher_cookies, student_id, num)
+        reset_passward(teacher_cookies, student_id, num, in_treeview='NO')
         #t.insert("end", "\n")
         #main(username=student_name, password="Aa6666"+student_name)
         #time.sleep(5)
@@ -751,9 +751,18 @@ def startmain():
                 get_all_list = teacher_get_studentlist(teacher_cookies, Schoolidtext, Gradeidtext, Classroomidtext, Semesteridtext, UserTypeidtext, OrderColumnidtext)
                 for all_list in get_all_list:
                     tree1.insert('', END, values=all_list)
+                    
                 def get_treeview_students_information(self):
+                    root.withdraw()
                     treeview_info = Toplevel()
                     treeview_info.title('提示')
+                    tmp = open("xueanquan.ico","wb+")
+                    tmp.write(base64.b64decode(img))
+                    tmp.close()
+                    global tmpico
+                    tmpico = ImageTk.PhotoImage(file="xueanquan.ico")
+                    treeview_info.iconphoto(False ,tmpico)
+                    os.remove("xueanquan.ico")
                     winWidth = 400
                     winHeight = 200
                     num = 1
@@ -788,6 +797,7 @@ def startmain():
 
                     tkinter.ttk.Button(treeview_info,text='重置该学生密码',command=lambda:reset_passward(teacher_cookies,finally_studentid,num,in_treeview)).place(x=60,y=140)
                     tkinter.ttk.Button(treeview_info,text='一键完成所有任务',command=lambda:for_one_student_do_work(teacher_cookies,finally_studentid,num)).place(x=230,y=140)
+
                 def start_treeview_students_information():
                     get_treeview_students_information()
                 #t.insert("end", name + " 该账号下的所有任务已完成 " + "\n", "tag_3")
