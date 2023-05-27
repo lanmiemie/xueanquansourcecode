@@ -774,8 +774,11 @@ def startmain():
                     treeview_info.resizable(0, 0)
                     lf_show_student_information = tkinter.ttk.LabelFrame(treeview_info,text="学生信息")
                     lf_show_student_information.place(x=100, y=8,width=200,height=100)
+
                     id_list = tree1.selection()
                     finally_studentid = ''
+                    if id_list is None :
+                        pass
                     for item in id_list:
                         name1,id1,classroomname1,studentid1 = tree1.item(item)["values"]
                         Label(lf_show_student_information,text='姓名: '+ name1).place(x=10,y=2)
@@ -797,9 +800,13 @@ def startmain():
 
                     tkinter.ttk.Button(treeview_info,text='重置该学生密码',command=lambda:reset_passward(teacher_cookies,finally_studentid,num,in_treeview)).place(x=60,y=140)
                     tkinter.ttk.Button(treeview_info,text='一键完成所有任务',command=lambda:for_one_student_do_work(teacher_cookies,finally_studentid,num)).place(x=230,y=140)
+               
+                    def on_closing():
+                        treeview_info.destroy()
+                        root.wm_deiconify()
+                    
+                    treeview_info.protocol("WM_DELETE_WINDOW", on_closing)
 
-                def start_treeview_students_information():
-                    get_treeview_students_information()
                 #t.insert("end", name + " 该账号下的所有任务已完成 " + "\n", "tag_3")
                 #t.config(state=DISABLED)
                 #tkinter.messagebox.showinfo(title='提示', message="全部任务都完成啦！\n如恁不相信本助手的完成能力\n恁可以上账号后台观看记录")
@@ -1056,12 +1063,12 @@ lf1 = tkinter.ttk.LabelFrame(root,text="登录信息")
 showteacherinfo = tkinter.ttk.LabelFrame(root,text="教师信息")
 lf_for_students = tkinter.ttk.LabelFrame(root,text="学生信息")
 lf_for_text = tkinter.ttk.LabelFrame(root,text="LOG输出")
-tree1 = tkinter.ttk.Treeview(lf_for_students, columns=('xm', 'zh', 'stuclass', 'stuid'),show='headings') 
+tree1 = tkinter.ttk.Treeview(lf_for_students, columns=('xm', 'zh', 'stuclass', 'stuid'),show='headings', selectmode="browse") 
 tree1.heading('xm', text='姓名')
 tree1.heading('zh', text='账号')
 tree1.heading('stuclass', text='所在班级')
 tree1.heading('stuid', text='学生ID')
-tree1.column('xm', width=60,anchor='center')
+tree1.column('xm', width=60,anchor='center', stretch= NO)
 tree1.column('zh', width=130,anchor='center')
 tree1.column('stuclass', width=80,anchor='center')
 tree1.column('stuid', width=90,anchor='center')

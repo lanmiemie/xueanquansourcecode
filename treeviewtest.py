@@ -39,7 +39,12 @@ def treeview_teacher_get_special_list():
         id_list = tree1.selection()
         for item in id_list:
             specialname,endtime,completepeople,shouldcompletepeople,completerate,specailstatus = tree1.item(item)["values"]
-            print(specialname,endtime,completepeople,shouldcompletepeople,completerate,specailstatus)
+            test11 = tree1.item(item)["values"]
+            print(tree1.item(item)["values"])
+            if test11 is None:
+                print('无法获取')
+            else:
+                print(specialname,endtime,completepeople,shouldcompletepeople,completerate,specailstatus)
 
     tree1.bind('<ButtonRelease-1>', adbc)
 
