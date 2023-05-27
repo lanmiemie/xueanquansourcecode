@@ -834,9 +834,9 @@ def updataprogram():
     except Exception as e:
         tkinter.messagebox.showerror(title='失败',message='网络连接失败，请检查网络环境后再试')
         return 0
-    url = 'https://xueanquan-fatdeadpanda.netlify.app/getprogram/teaupdatalog'
-    ver_url = 'https://xueanquan-fatdeadpanda.netlify.app/getprogram/teaver'
-    hashcheck_url = 'https://xueanquan-fatdeadpanda.netlify.app/getprogram/hashcheckforteacher'
+    url = 'https://gitee.com/archerfish/xueanquanhelperdownload/raw/master/teaupdatalog'
+    ver_url = 'https://gitee.com/archerfish/xueanquanhelperdownload/raw/master/teaver'
+    hashcheck_url = 'https://gitee.com/archerfish/xueanquanhelperdownload/raw/master/hashcheckforteacher'
     header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36'}
     a = requests.get(url, headers = header).text
     b = requests.get(ver_url, headers = header).text.replace("\n", "")
@@ -1110,7 +1110,7 @@ def popup(event):
     menufortext.post(event.x_root, event.y_root)   # post在指定的位置显示弹出菜单
 t.bind("<Button-3>", popup)  
 
-#in_start()
+in_start()
 t.config(state=DISABLED)
 
 #root.wm_attributes('-topmost','true')
