@@ -2,6 +2,7 @@ import re
 import threading
 import time
 import requests
+import webbrowser
 
 def get_login_qrcode():
 
@@ -31,6 +32,8 @@ def get_login_qrcode():
     Encodesceneid = str(get_encodesceneid).replace("'",'').replace(']','').replace('[','')
     get_relativeUrl = re.findall('"relativeUrl":"(.*?)",', res.text)
     relativeUrl = str(get_relativeUrl).replace("'",'').replace(']','').replace('[','')
+    
+    webbrowser.open(relativeUrl)
 
     print(relativeUrl)
 
@@ -75,20 +78,23 @@ def get_scan_result(EncodeSceneId):
             encodeid = get_login_qrcode()
             return 0
         elif  statuscode == 'Success':
-            print("扫码成功,正在获取cookie")
-            userid = re.findall('UserID=(.*?);', str(res.headers['Set-Cookie']))
-            print(userid)
+            useridcookie = re.findall('UserID=(.*?);', str(res.headers['Set-Cookie']))
+            userid = re.findall('"userId":="(.*?)",', res.text)
+            username = re.findall('"userName":="(.*?)",', res.text)
+            name = re.findall('"trueName":="(.*?)",', res.text)
+            print("扫码成功\n"+"姓名: " + str(name) + ", 用户ID : " + str(userid) + ", 用户名: " + str(username) +"\n正在获取cookie")
+            print(useridcookie)
             timer.cancel()
             return 0
         elif  statuscode == 'Wait':
             print("等待扫码")
         else:
-            print('失败')
+            print('未知状态\n'+ statuscode)
 
-        timer = threading.Timer(0.5,checkstatus)
+        timer = threading.Timer(0.2,checkstatus)
         timer.start()
 
-    timer = threading.Timer(0.5,checkstatus)
+    timer = threading.Timer(0.2,checkstatus)
     timer.start()
 
 encodeid = get_login_qrcode()
