@@ -1,62 +1,94 @@
+import re
+import threading
 import time
-
 import requests
 
+def get_login_qrcode():
 
-def download(name, url, cookies, header={'Connection': 'keep-alive','User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36'}, interval=0.5):
-    def MB(byte):
-        return byte / 1024 / 1024
-    #print(name)
-    if len(cookies) == 0:
-        try:
-            res = requests.get(url,headers=header)
-        except Exception as e:
-            print('下载失败')
-            return 0
-    else:
-        headera = {'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-                   'Accept-Encoding': 'gzip, deflate, br',
-                   'Accept-Language': 'zh-CN,zh;q=0.9',
-                   'Connection': 'keep-alive',
-                   #'Content-Length': '83',
-                   'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                   'Cookie': cookies,
-                   'Host': 'guangzhou.xueanquan.com',
-                   'Origin': 'https://guangzhou.xueanquan.com',
-                   'Referer': 'https://guangzhou.xueanquan.com/EduAdmin/Home/Index',
-                   #'sec-ch-ua': '"Not A;Brand";v="99", "Chromium";v="100", "Google Chrome";v="100"',
-                   'sec-ch-ua-mobile': '?0',
-                   'sec-ch-ua-platform': 'Windows',
-                   'Sec-Fetch-Dest': 'document',
-                   'Sec-Fetch-Mode': 'cors',
-                   'Sec-Fetch-Site': 'same-origin',
-                   'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36',
-                   'X-Requested-With': 'XMLHttpRequest'
-                   }
-        try:
-            res = requests.get(url,headers=headera)
-        except Exception as e:
-            print('连接到远程服务器失败，请再试一次')
-            return 0
-    f = open(name, 'wb')
-    down_size = 0  # 已下载字节数
-    old_down_size = 0  # 上一次已下载字节数
-    time_ = time.time()
-    for chunka in res.iter_content(chunk_size=512):
-        if chunka:
-            f.write(chunka)
-            down_size += len(chunka)
-            if time.time() - time_ > interval:
-                #rate = down_size / file_size * 100  # 进度  0.01%
-                speed = (down_size - old_down_size) / interval  # 速率 0.01B/s
-                old_down_size = down_size
-                time_ = time.time()
-                global print_params
-                print_params = [MB(speed), MB(down_size)]
-                #sys.stdout.write("\r[%s%s] %d%%" % ('>' * done, ' ' * (50 - done), 100 * down_size / file_size))
-                #sys.stdout.flush()
-                print('\r{:.1f}MB/s -已下载 {:.1f}MB  '.format(*print_params))
-                #print('\r{:.1f}MB/s -已下载 {:.1f}MB，共 {:.1f}MB 已下载百分之:{:.2%} 还剩 {:.0f} 秒   '.format(*print_params))
-    f.close()
+    url = 'https://appapi.xueanquan.com/usercenter/api/v5/wx/wx-login-qrcode'
 
-download('./a.exe','https://gitee.com/archerfish/xueanquanhelperdownload/raw/master/xueanquanhelperforteacher.exe',cookies = '')
+    headers = {'Accept': '*//*',
+               'Accept-Encoding': 'gzip',
+               'Accept-Language': 'zh-CN,zh;q=0.9',
+               'Connection': 'keep-alive',
+               'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+               'Host': 'appapi.xueanquan.com',
+               'Origin': 'https://login.xueanquan.com',
+               'Referer': 'https://login.xueanquan.com/login?type=codeLogin',
+               #'sec-ch-ua': '"Not A;Brand";v="99", "Chromium";v="100", "Google Chrome";v="100"',
+               'sec-ch-ua-mobile': '?0',
+               'sec-ch-ua-platform': 'Windows',
+               'Sec-Fetch-Dest': 'empty',
+               'Sec-Fetch-Mode': 'cors',
+               'Sec-Fetch-Site': 'same-origin',
+               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36',
+               'X-Requested-With': 'XMLHttpRequest'
+               }
+    
+    res = requests.get(url=url, headers=headers)
+
+    get_encodesceneid = re.findall('"encodeSceneId":"(.*?)"', res.text)
+    Encodesceneid = str(get_encodesceneid).replace("'",'').replace(']','').replace('[','')
+    get_relativeUrl = re.findall('"relativeUrl":"(.*?)",', res.text)
+    relativeUrl = str(get_relativeUrl).replace("'",'').replace(']','').replace('[','')
+
+    print(relativeUrl)
+
+    get_scan_result(Encodesceneid)
+
+    return Encodesceneid
+
+
+def get_scan_result(EncodeSceneId):
+
+    url = 'https://appapi.xueanquan.com/usercenter/api/v5/wx/scan-result?encodeSceneId=' + EncodeSceneId
+
+    headers = {'Accept': '*//*',
+               'Accept-Encoding': 'gzip',
+               'Accept-Language': 'zh-CN,zh;q=0.9',
+               'Connection': 'keep-alive',
+               'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+               'Host': 'appapi.xueanquan.com',
+               'Origin': 'https://login.xueanquan.com',
+               'Referer': 'https://login.xueanquan.com/login?type=codeLogin',
+               #'sec-ch-ua': '"Not A;Brand";v="99", "Chromium";v="100", "Google Chrome";v="100"',
+               'sec-ch-ua-mobile': '?0',
+               'sec-ch-ua-platform': 'Windows',
+               'Sec-Fetch-Dest': 'empty',
+               'Sec-Fetch-Mode': 'cors',
+               'Sec-Fetch-Site': 'same-origin',
+               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36',
+               'X-Requested-With': 'XMLHttpRequest'
+               }
+    
+    data = {' '}
+
+    def checkstatus():
+        res = requests.post(url=url, headers=headers, data=data)
+        #print(res.text)
+        global timer
+        timer = threading.Timer(0.5,checkstatus)
+        getstatuscode = re.findall('"status":"(.*?)",', res.text)
+        statuscode = str(getstatuscode).replace("'",'').replace(']','').replace('[','')
+        if statuscode == 'Error':
+            print('扫码已过期，正在重新获取')
+            encodeid = get_login_qrcode()
+            return 0
+        elif  statuscode == 'Success':
+            print("扫码成功,正在获取cookie")
+            userid = re.findall('UserID=(.*?);', str(res.headers['Set-Cookie']))
+            print(userid)
+            timer.cancel()
+            return 0
+        elif  statuscode == 'Wait':
+            print("等待扫码")
+        else:
+            print('失败')
+
+        timer = threading.Timer(0.5,checkstatus)
+        timer.start()
+
+    timer = threading.Timer(0.5,checkstatus)
+    timer.start()
+
+encodeid = get_login_qrcode()

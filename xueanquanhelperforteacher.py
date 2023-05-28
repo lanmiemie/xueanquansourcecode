@@ -22,7 +22,7 @@ from xueanquanapi import teacher_get_schoolid, teacher_get_studentlist, login, t
 
 root = Tk()
 #root.attributes("-alpha", 0.8)
-ver = "1.3.0"
+ver = "1.2.0"
 title='安全教育平台助手 - 教师版 '+ver
 root.title(title)
 tmp = open("xueanquan.ico","wb+")
@@ -33,7 +33,7 @@ tmpico = ImageTk.PhotoImage(file="xueanquan.ico")
 root.iconphoto(False ,tmpico)
 os.remove("xueanquan.ico")
 #root.iconbitmap(".\\backup_user\du.ico")
-winWidth = 344
+winWidth = 345
 winHeight = 310
 screenWidth = root.winfo_screenwidth()
 screenHeight = root.winfo_screenheight()
@@ -77,7 +77,7 @@ class myStdout():	# 重定向类
         sys.stderr = self.stderrbak
 
 def back_window_size():
-    winWidth = 344
+    winWidth = 345
     winHeight = 310
     screenWidth = root.winfo_screenwidth()
     screenHeight = root.winfo_screenheight()
@@ -845,7 +845,7 @@ def updataprogram():
         y = tkinter.messagebox.askyesno(title='喵呜~~ 检测到新版本!!!',message='目前版本为 '+ver +'\n\n最新版本为 '+b +'\n\n'+a)
         if y == False:
             return 0
-        Download_a1='https://xueanquan-fatdeadpanda.netlify.app/getprogram/xueanquanhelperforteacher.exe'
+        Download_a1='https://ghproxy.com/https://github.com/lanmiemie/xueanquandownload/blob/master/xueanquanhelperforteacher.exe'
         #a2=requests.get(Download_a1,headers=header,stream=True)
         #with open("./version-"+b +".exe","wb+") as code:
         #    code.write(a2.content)
