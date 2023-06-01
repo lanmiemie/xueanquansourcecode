@@ -505,3 +505,5 @@ def get_scan_result(EncodeSceneId):
 
     timer = threading.Timer(0.2,checkstatus)
     timer.start()
+
+__all__ = ['login','teacher_get_schoolid','teacher_get_studentlist','teacher_get_students','teacher_get_students_xlsx','get_message','get_homework','get_special','teacher_get_special_list','get_login_qrcode','get_scan_user_info','get_scan_result']
