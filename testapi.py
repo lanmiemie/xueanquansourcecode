@@ -12,18 +12,8 @@ def get_login_qrcode():
                'Accept-Encoding': 'gzip',
                'Accept-Language': 'zh-CN,zh;q=0.9',
                'Connection': 'keep-alive',
-               'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
                'Host': 'appapi.xueanquan.com',
-               'Origin': 'https://login.xueanquan.com',
-               'Referer': 'https://login.xueanquan.com/login?type=codeLogin',
-               #'sec-ch-ua': '"Not A;Brand";v="99", "Chromium";v="100", "Google Chrome";v="100"',
-               'sec-ch-ua-mobile': '?0',
-               'sec-ch-ua-platform': 'Windows',
-               'Sec-Fetch-Dest': 'empty',
-               'Sec-Fetch-Mode': 'cors',
-               'Sec-Fetch-Site': 'same-origin',
                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36',
-               'X-Requested-With': 'XMLHttpRequest'
                }
     
     res = requests.get(url=url, headers=headers)
@@ -38,6 +28,41 @@ def get_login_qrcode():
     get_scan_result(Encodesceneid)
     return Encodesceneid
 
+def get_scan_user_info(cookie):
+
+    url = 'https://huodongapi.xueanquan.com/p/guangdong/Topic/topic/platformapi/api/v1/users/user-info'
+
+    headers =  {'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Accept-Language': 'zh-CN,zh;q=0.9',
+                'Connection': 'keep-alive',
+                'Cookie':cookie,
+                'Host': 'huodongapi.xueanquan.com',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36'
+               }
+    
+    res = requests.get(url=url,headers=headers)
+
+    userid = str(re.findall('"userID":(.*?),', res.text)).replace("'",'').replace(']','').replace('[','')
+    username = str(re.findall('"userName":"(.*?)",', res.text)).replace("'",'').replace(']','').replace('[','')
+    usertype = str(re.findall('"userType":"(.*?)",', res.text)).replace("'",'').replace(']','').replace('[','')
+    name = str(re.findall('"trueName":"(.*?)",', res.text)).replace("'",'').replace(']','').replace('[','')
+    schoolname = str(re.findall('"schoolName":"(.*?)",', res.text)).replace("'",'').replace(']','').replace('[','')
+    grade = str(re.findall('"grade":(.*?),', res.text)).replace("'",'').replace(']','').replace('[','')
+    classname = str(re.findall('"className":"(.*?)",', res.text)).replace("'",'').replace(']','').replace('[','')
+
+    classname = '{0}年级{1}'.format(grade,classname)
+
+    if usertype == 'Teacher':
+        usertype = '教师'
+    elif  usertype == 'Users':
+        usertype = '学生'
+    else:
+        return 0
+
+    return userid,username,usertype,name,schoolname,grade,classname
+
+
 def get_scan_result(EncodeSceneId):
 
     url = 'https://appapi.xueanquan.com/usercenter/api/v5/wx/scan-result?encodeSceneId={0}'.format(EncodeSceneId)
@@ -46,16 +71,7 @@ def get_scan_result(EncodeSceneId):
                 'Accept-Encoding': 'gzip',
                 'Accept-Language': 'zh-CN,zh;q=0.9',
                 'Connection': 'keep-alive',
-                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
                 'Host': 'appapi.xueanquan.com',
-                'Origin': 'https://login.xueanquan.com',
-                'Referer': 'https://login.xueanquan.com/login?type=codeLogin',
-                #'sec-ch-ua': '"Not A;Brand";v="99", "Chromium";v="100", "Google Chrome";v="100"',
-                #'sec-ch-ua-mobile': '?0',
-                'sec-ch-ua-platform': 'Windows',
-                'Sec-Fetch-Dest': 'empty',
-                'Sec-Fetch-Mode': 'cors',
-                'Sec-Fetch-Site': 'same-origin',
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36',
                 #'X-Requested-With': 'XMLHttpRequest'
             }
@@ -80,10 +96,9 @@ def get_scan_result(EncodeSceneId):
             useridforcookie = str(re.findall('UserID=(.*?);', str(res.headers['Set-Cookie']))).replace("'",'').replace(']','').replace('[','')
             domainforcookie = str(re.findall('ServerSide=(.*?);', str(res.headers['Set-Cookie']))).replace("'",'').replace(']','').replace('[','').replace('%3A',':').replace("%2F",'/')
             cookies = 'ServerSide={0};UserID={1}'.format(domainforcookie, useridforcookie)
-            userid = str(re.findall('"userId":"(.*?)",', res.text)).replace("'",'').replace(']','').replace('[','')
-            username = str(re.findall('"userName":"(.*?)",', res.text)).replace("'",'').replace(']','').replace('[','')
-            name = str(re.findall('"trueName":"(.*?)",', res.text)).replace("'",'').replace(']','').replace('[','')
-            print("扫码成功\n"+"姓名: " + name + ", 用户ID : " + userid + ", 用户名: " + username +"\n正在获取cookie")
+            userid,username,usertype,name,schoolname,grade,classname = get_scan_user_info(cookies)
+            all_info = "扫码成功\n"+"姓名: {0},用户ID: {1},用户名: {2},班别: {3},账号类型: {4},学校: {5}".format(name,userid,username,classname,usertype,schoolname)
+            print(all_info)
             print(cookies)
             # 取消循环
             timer.cancel()
@@ -100,3 +115,4 @@ def get_scan_result(EncodeSceneId):
     timer.start()
 
 encodeid = get_login_qrcode()
+#get_scan_user_info()
