@@ -1,2 +1,2 @@
-from xaq import login
+import xaq
 

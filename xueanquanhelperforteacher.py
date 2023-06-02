@@ -22,7 +22,7 @@ from xueanquanapi import teacher_get_schoolid, teacher_get_studentlist, login, t
 
 root = Tk()
 #root.attributes("-alpha", 0.8)
-ver = "1.2.0"
+ver = "1.2.2"
 title='安全教育平台助手 - 教师版 '+ver
 root.title(title)
 tmp = open("xueanquan.ico","wb+")
@@ -215,28 +215,36 @@ def reset_passward(cookie, studentid, num, in_treeview):
                    'X-Requested-With': 'XMLHttpRequest'}
 
         param = {'studentid': studentid}
-        res = requests.post(url=url, headers=headers, params=param)
-        # print(res.text)
-        #statuscode = re.findall('"statusCode":"(.*?)"', res.text)[0]
-        message = re.findall('"message":"(.*?)"', res.text)[0]
-        if str('"statusCode":"200"') in res.text:
-            if str(in_treeview) == 'YES':
-                tkinter.messagebox.showinfo('成功','成功重置该学生密码\n\n'+ message)
+
+        try:
+            res = requests.post(url=url, headers=headers, params=param)
+            # print(res.text)
+            #statuscode = re.findall('"statusCode":"(.*?)"', res.text)[0]
+            message = re.findall('"message":"(.*?)"', res.text)[0]
+            if str('"statusCode":"200"') in res.text:
+                if str(in_treeview) == 'YES':
+                    tkinter.messagebox.showinfo('成功','成功重置该学生密码\n\n'+ message)
+                else:
+                    t.insert('end', 'YES: '+ message + '\n', "tag_green")
             else:
-                t.insert('end', 'YES: '+ message + '\n', "tag_green")
-        else:
-            if str(in_treeview) == 'YES':
-                tkinter.messagebox.showerror('失败','无法重置该学生密码\n错误代码如下\n'+ message)
-            else:
-                t.insert('end', 'ERROR: '+ message + '\n', "tag_red")
-        # 提示重置密码成功
-        #print(message)
+                if str(in_treeview) == 'YES':
+                    tkinter.messagebox.showerror('失败','无法重置该学生密码\n错误代码如下\n'+ message)
+                else:
+                    t.insert('end', 'ERROR: '+ message + '\n', "tag_red")
+            # 提示重置密码成功
+            #print(message)
+        except Exception as e:
+            print('尝试连接失败,2秒后重试')
+            time.sleep(2)
+            print("正在重试中...")
+            reset_passward(cookie, studentid, num, in_treeview)
+
     except Exception as e:
         print(e)
         if num < 4:
             print('Tip:  第{0}次重试，事不过三！'.format(num))
             num = num + 1
-            reset_passward(cookie, studentid, num)
+            reset_passward(cookie, studentid, num, in_treeview)
         else:
             pass
 
@@ -285,7 +293,7 @@ def do_homework(courseid, gradeid, userid, num):
     '''
     global errorcodehas
     try:
-        print(courseid, gradeid)
+        courseid = str(courseid).replace('&require-un=true','')
         cookies = 'ServerSide=https://guangdong.xueanquan.com/;' + 'UserID=' + userid
         # 下面全部新加、来源于无可奈何
         # 这是获取活动视频
@@ -302,13 +310,15 @@ def do_homework(courseid, gradeid, userid, num):
                     'Accept-Language': 'zh-cn',
                     'Accept-Encoding': 'gzip, deflate, br'}
         res2 = requests.get(url=url2, headers=headers2)
-        videoid = re.findall('"contentId": (.*?),', res2.text)
-        workid = re.findall('"workId": (.*?),', res2.text)
-        fid = re.findall('"fid": (.*?),', res2.text)
-       # print('videoid: ',videoid)
-        # print('workId: ',workid)
-        # print('fid: ', fid)
-        # print(res2.text)
+        videoid = str(re.findall('"contentId": (.*?),', res2.text)).replace("'",'').replace(']','').replace('[','')
+        workid = str(re.findall('"workId": (.*?),', res2.text)).replace("'",'').replace(']','').replace('[','')
+        fid = str(re.findall('"fid": (.*?),', res2.text)).replace("'",'').replace(']','').replace('[','')
+        all_id = 'Courseid: {0} Gradeid: {1}\nVideoid: {2} workid: {3}\nfid: {4}'.format(courseid, gradeid, videoid, workid, fid)
+        #print('videoid: ',videoid)
+        #print('workId: ',workid)
+        #print('fid: ', fid)
+        #print(res2.text)
+        print(all_id)
 
         # 这是观看视频
         url1 = 'https://guangzhou.xueanquan.com/JiaTing/ajax/FamilyEduCenter.EscapeSkill.SeeVideo,FamilyEduCenter.ashx?_method=SkillCheckName&_session=rw'
@@ -324,11 +334,11 @@ def do_homework(courseid, gradeid, userid, num):
                     'Accept-Language': 'zh-cn',
                     'Accept-Encoding': 'gzip, deflate, br'}
         data1 = 'videoid={}\r\ngradeid={}\r\ncourseid={}'.format(
-            videoid[0], courseid, gradeid)
+            videoid, courseid, gradeid)
         # requests.options(url=url1, headers=headers1)
         # print(data1)
         res1 = requests.post(url=url1, headers=headers1, data=data1)
-        print(res1.text, '\n')
+        #print(res1.text, '\n')
 
         # 保存视频进度
         url3 = 'https://yyapi.xueanquan.com/guangdong/api/v1/StudentHomeWork/VideoPlayRecordSave?courseId={}&gradeId={}'.format(
@@ -349,29 +359,28 @@ def do_homework(courseid, gradeid, userid, num):
 
         # 答题
         url4 = 'https://yyapi.xueanquan.com/guangdong/api/v1/StudentHomeWork/HomeWorkSign'
+
         headers4 = {'Host': 'yyapi.xueanquan.com',
                     'Content-Type': 'application/json;charset=utf-8',
                     'Origin': 'https://guangdong.xueanquan.com',
-                    'Accept-Encoding': 'gzip, deflate, br',
+                    #'Accept-Encoding': 'gzip, deflate, br',
                     'Cookie': cookies,
                     'Connection': 'keep-alive',
                     'Accept': '*/*',
                     'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 safetreeapp/1.8.6',
                     #'Referer': 'https://guangdong.xueanquan.com/html/platform/student/skilltrain.html?gid=485&li=696&externalUrl=https%3A%2F%2Fsafeh5.xueanquan.com%2Fsafeedu%2FhomeworkList&page_id=121',
-                    'Content-Length': '213',
-                    'Accept-Language': 'zh-cn'}
-        json4 = {"testinfo": "已掌握技能",
-                 "testResult": 1,
-                 #"schoolId" : 332427225,
-                 "workId": workid[0],
-                 "fid": fid[0],
-                 "testanswer": "0|0|0",
-                 #"comefrom" : 20227,
-                 "courseId": courseid,
-                 #"cityCode" : 120023,
-                 #"classroom" : 533964015,
-                 "grade": 1,
-                 "testMark": 100}
+                    #'Content-Length': '213'
+                    #'Accept-Language': 'zh-cn'
+                    }
+        json4 = {"workId":workid,
+                 "fid":fid,
+                 "testanswer":"0|0|0",
+                 "testinfo":"已掌握技能",
+                 "testMark":100,
+                 "testResult":1,
+                 "courseId":"{0}".format(courseid)
+                 }
+
         res4 = requests.post(url=url4, headers=headers4, json=json4)
         print(res4.text)
         
@@ -380,7 +389,7 @@ def do_homework(courseid, gradeid, userid, num):
         if num < 4:
             t.insert('end', 'ERROR:  第{0}次重试，事不过三！'.format(num), "tag_red")
             num = num + 1
-            do_homework(courseid, gradeid, cookies, num)
+            do_homework(courseid, gradeid, userid, num)
         else:
             errorcodehas = errorcodehas + 1
             pass
