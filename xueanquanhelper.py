@@ -24,10 +24,11 @@ import logging
 from tkinter import scrolledtext
 from fake_useragent import FakeUserAgent
 import hashlib
+from xueanquanapi import login
 
 root = Tk()
 #root.attributes("-alpha", 0.8)
-ver = "1.5.1"
+ver = "1.5.2"
 title='安全教育平台助手 - 学生版 '+ver
 root.title(title)
 tmp = open("xueanquan.ico","wb+")
@@ -117,53 +118,6 @@ def download(name, url, header={'Connection': 'keep-alive','User-Agent': 'Mozill
                 #print('\r{:.1f}MB/s -已下载 {:.1f}MB，共 {:.1f}MB 已下载百分之:{:.2%} 还剩 {:.0f} 秒   '.format(*print_params))
     f.close()
     t.config(state=DISABLED)
-
-def login(username, password):
-    '''
-    登陆
-    '''
-    accesstoken = ''
-    serverside = ''
-    userid = ''
-    name = ''
-    plainUserId = ''
-    url = 'https://appapi.xueanquan.com/usercenter/api/v1/account/PostLogin'
-    headers = {'Host': 'appapi.xueanquan.com',
-               'Content-Type': 'application/json',
-               'Content-Length': '102',
-               #'X-TrackingId':'4e1389ae-51e3-427d-962e-459ff40b44d0',
-               'Connection': 'keep-alive',
-               #'X-EquipmentId': '22CBB69F-D6E4-42F5-B615-F4297D54AE93',
-               'Accept': '*/*',
-               'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 safetreeapp/1.8.6',
-               'Accept-Language': 'zh-Hans-HK;q=1',
-               'Authorization': '',
-               'Accept-Encoding': 'gzip, deflate, br'}
-
-    json = {
-        "Password": password,
-        "EquipmentId": "22CBB69F-D6E4-42F5-B615-F4297D54AE93",
-        "Username": username}
-
-    res = requests.post(url=url, headers=headers, json=json)
-    # print(res.text)
-    #print(res.text)
-    data = re.findall('"data":(.*?),', res.text)[0]
-    studentorteacherfirst = re.findall('"regionalName":(.*?),', res.text)[0]
-    studentorteacherfinally = str(studentorteacherfirst).replace('"', '')
-    #print(str(studentorteacherfinally))
-    if data == 'null':
-        pass
-    else:
-        # tip=findall("err_desc":"()", res.text)[0]
-        userid = re.findall('"accessCookie":"(.*?)"', res.text)[0]
-        serverside = re.findall('"webUrl":"(.*?)"', res.text)[0]
-        name = re.findall('"nickName":"(.*?)"', res.text)[0]
-        accesstoken = re.findall('"accessToken":"(.*?)"', res.text)[0]
-        plainUserId = re.findall('"plainUserId":(.*?),', res.text)[0]
-        # print(accesstoken, serverside, userid, name)
-    return accesstoken, serverside, userid, name, plainUserId, studentorteacherfinally
-
 
 def get_message(userid, accesstoken, plainUserId):
     '''
@@ -279,7 +233,7 @@ def do_homework(courseid, gradeid, userid, num):
     '''
     global errorcodehas
     try:
-        print(courseid, gradeid)
+        courseid = str(courseid).replace('&require-un=true','')
         cookies = 'ServerSide=https://guangdong.xueanquan.com/;' + 'UserID=' + userid
         # 下面全部新加、来源于无可奈何
         # 这是获取活动视频
@@ -296,13 +250,15 @@ def do_homework(courseid, gradeid, userid, num):
                     'Accept-Language': 'zh-cn',
                     'Accept-Encoding': 'gzip, deflate, br'}
         res2 = requests.get(url=url2, headers=headers2)
-        videoid = re.findall('"contentId": (.*?),', res2.text)
-        workid = re.findall('"workId": (.*?),', res2.text)
-        fid = re.findall('"fid": (.*?),', res2.text)
-       # print('videoid: ',videoid)
-        # print('workId: ',workid)
-        # print('fid: ', fid)
-        # print(res2.text)
+        videoid = str(re.findall('"contentId": (.*?),', res2.text)).replace("'",'').replace(']','').replace('[','')
+        workid = str(re.findall('"workId": (.*?),', res2.text)).replace("'",'').replace(']','').replace('[','')
+        fid = str(re.findall('"fid": (.*?),', res2.text)).replace("'",'').replace(']','').replace('[','')
+        all_id = 'Courseid: {0} Gradeid: {1}\nVideoid: {2} workid: {3}\nfid: {4}'.format(courseid, gradeid, videoid, workid, fid)
+        #print('videoid: ',videoid)
+        #print('workId: ',workid)
+        #print('fid: ', fid)
+        #print(res2.text)
+        print(all_id)
 
         # 这是观看视频
         url1 = 'https://guangzhou.xueanquan.com/JiaTing/ajax/FamilyEduCenter.EscapeSkill.SeeVideo,FamilyEduCenter.ashx?_method=SkillCheckName&_session=rw'
@@ -318,11 +274,11 @@ def do_homework(courseid, gradeid, userid, num):
                     'Accept-Language': 'zh-cn',
                     'Accept-Encoding': 'gzip, deflate, br'}
         data1 = 'videoid={}\r\ngradeid={}\r\ncourseid={}'.format(
-            videoid[0], courseid, gradeid)
+            videoid, courseid, gradeid)
         # requests.options(url=url1, headers=headers1)
         # print(data1)
         res1 = requests.post(url=url1, headers=headers1, data=data1)
-        print(res1.text, '\n')
+        #print(res1.text, '\n')
 
         # 保存视频进度
         url3 = 'https://yyapi.xueanquan.com/guangdong/api/v1/StudentHomeWork/VideoPlayRecordSave?courseId={}&gradeId={}'.format(
@@ -343,29 +299,28 @@ def do_homework(courseid, gradeid, userid, num):
 
         # 答题
         url4 = 'https://yyapi.xueanquan.com/guangdong/api/v1/StudentHomeWork/HomeWorkSign'
+
         headers4 = {'Host': 'yyapi.xueanquan.com',
                     'Content-Type': 'application/json;charset=utf-8',
                     'Origin': 'https://guangdong.xueanquan.com',
-                    'Accept-Encoding': 'gzip, deflate, br',
+                    #'Accept-Encoding': 'gzip, deflate, br',
                     'Cookie': cookies,
                     'Connection': 'keep-alive',
                     'Accept': '*/*',
                     'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 safetreeapp/1.8.6',
                     #'Referer': 'https://guangdong.xueanquan.com/html/platform/student/skilltrain.html?gid=485&li=696&externalUrl=https%3A%2F%2Fsafeh5.xueanquan.com%2Fsafeedu%2FhomeworkList&page_id=121',
-                    'Content-Length': '213',
-                    'Accept-Language': 'zh-cn'}
-        json4 = {"testinfo": "已掌握技能",
-                 "testResult": 1,
-                 #"schoolId" : 332427225,
-                 "workId": workid[0],
-                 "fid": fid[0],
-                 "testanswer": "0|0|0",
-                 #"comefrom" : 20227,
-                 "courseId": courseid,
-                 #"cityCode" : 120023,
-                 #"classroom" : 533964015,
-                 "grade": 1,
-                 "testMark": 100}
+                    #'Content-Length': '213'
+                    #'Accept-Language': 'zh-cn'
+                    }
+        json4 = {"workId":workid,
+                 "fid":fid,
+                 "testanswer":"0|0|0",
+                 "testinfo":"已掌握技能",
+                 "testMark":100,
+                 "testResult":1,
+                 "courseId":"{0}".format(courseid)
+                 }
+
         res4 = requests.post(url=url4, headers=headers4, json=json4)
         print(res4.text)
         
@@ -374,7 +329,7 @@ def do_homework(courseid, gradeid, userid, num):
         if num < 4:
             t.insert('end', 'ERROR:  第{0}次重试，事不过三！'.format(num), "tag_red")
             num = num + 1
-            doit_course(courseid, gradeid, cookies, num)
+            do_homework(courseid, gradeid, userid, num)
         else:
             errorcodehas = errorcodehas + 1
             pass
@@ -530,7 +485,7 @@ def main(username, password):
     global errorcodehas
     #global t
     # 登陆账号，获取信息
-    accesstoken, serverside, userid, name, plainUserId, studentorteacherfinally = login(
+    accesstoken, serverside, userid, name, plainUserId, studentorteacher, tip, classroomname, schoolname = login(
         username, password)
     # 获取安全提醒任务
     title_all, messageid_all = get_message(userid, accesstoken, plainUserId)
@@ -640,11 +595,11 @@ def startmain():
             return 0
         root.title(username + ' ，正在获取此账号的信息-----')
         # 登陆账号，获取信息
-        accesstoken, serverside, userid, name, plainUserId, studentorteacherfinally = login(
+        accesstoken, serverside, userid, name, plainUserId, studentorteacher, tip, classroomname, schoolname = login(
             username, password)
         # 判断是否登录成功
         if name != '':
-            if studentorteacherfinally == '学生':
+            if studentorteacher == '"学生"':
                 root.title('学生 ' + name + ' 欢迎您，程序正在运行，请不要关闭此界面-----')
                 #t.delete("2.0","end")
                 #t.insert("end", "\n")
@@ -918,7 +873,7 @@ def popup(event):
     menufortext.post(event.x_root, event.y_root)   # post在指定的位置显示弹出菜单
 t.bind("<Button-3>", popup)  
 
-in_start()
+#in_start()
 t.config(state=DISABLED)
 
 #root.wm_attributes('-topmost','true')
