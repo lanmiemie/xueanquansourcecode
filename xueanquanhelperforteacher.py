@@ -22,7 +22,7 @@ from xueanquanapi import teacher_get_schoolid, teacher_get_studentlist, login, t
 
 root = Tk()
 #root.attributes("-alpha", 0.8)
-ver = "1.2.2"
+ver = "1.3.2"
 title='安全教育平台助手 - 教师版 '+ver
 root.title(title)
 tmp = open("xueanquan.ico","wb+")
@@ -309,7 +309,9 @@ def do_homework(courseid, gradeid, userid, num):
                     'Referer': 'https://guangdong.xueanquan.com/html/platform/student/skilltrain.html?gid=485&li=696&externalUrl=https%3A%2F%2Fsafeh5.xueanquan.com%2Fsafeedu%2FhomeworkList&page_id=121',
                     'Accept-Language': 'zh-cn',
                     'Accept-Encoding': 'gzip, deflate, br'}
+        
         res2 = requests.get(url=url2, headers=headers2)
+
         videoid = str(re.findall('"contentId": (.*?),', res2.text)).replace("'",'').replace(']','').replace('[','')
         workid = str(re.findall('"workId": (.*?),', res2.text)).replace("'",'').replace(']','').replace('[','')
         fid = str(re.findall('"fid": (.*?),', res2.text)).replace("'",'').replace(']','').replace('[','')
@@ -363,14 +365,11 @@ def do_homework(courseid, gradeid, userid, num):
         headers4 = {'Host': 'yyapi.xueanquan.com',
                     'Content-Type': 'application/json;charset=utf-8',
                     'Origin': 'https://guangdong.xueanquan.com',
-                    #'Accept-Encoding': 'gzip, deflate, br',
+                    'Accept-Encoding': 'gzip, deflate, br',
                     'Cookie': cookies,
                     'Connection': 'keep-alive',
                     'Accept': '*/*',
                     'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 safetreeapp/1.8.6',
-                    #'Referer': 'https://guangdong.xueanquan.com/html/platform/student/skilltrain.html?gid=485&li=696&externalUrl=https%3A%2F%2Fsafeh5.xueanquan.com%2Fsafeedu%2FhomeworkList&page_id=121',
-                    #'Content-Length': '213'
-                    #'Accept-Language': 'zh-cn'
                     }
         json4 = {"workId":workid,
                  "fid":fid,
@@ -383,6 +382,14 @@ def do_homework(courseid, gradeid, userid, num):
 
         res4 = requests.post(url=url4, headers=headers4, json=json4)
         print(res4.text)
+
+        get_state = str(re.findall('"success": (.*?),', res4.text)).replace("'",'').replace(']','').replace('[','')
+
+        if get_state == 'true':
+            print("答题成功")
+            pass
+        else:
+            raise Exception('答题失败')
         
     except Exception as e:
         print(e)
@@ -444,7 +451,7 @@ def do_special(userid, specialId, sparespecialId, step, num):
         if num < 4:
             t.insert('end', 'ERROR:  第{0}次重试，事不过三！'.format(num), "tag_red")
             num = num + 1
-            do_special(userid, specialId, step, num)
+            do_special(userid, specialId, sparespecialId, step, num)
         else:
             errorcodehas = errorcodehas+1
             pass
@@ -594,6 +601,7 @@ def do_students_work(student_all, teacher_cookies, num, teacher_name):
     do_students_work_button['state'] = DISABLED
     reset_allstudents_password_button['state'] = DISABLED
     logoutbutton['state'] = DISABLED
+    download_students_xlsx_button['state'] = DISABLED
     t.config(state=NORMAL)
     t.delete("1.0","end")
     t.insert("end", "开始检测网络连通性..."+ "\n", "tag_3")
@@ -633,6 +641,7 @@ def do_students_work(student_all, teacher_cookies, num, teacher_name):
     do_students_work_button['state'] = NORMAL
     reset_allstudents_password_button['state'] = NORMAL
     logoutbutton['state'] = NORMAL
+    download_students_xlsx_button['state'] = NORMAL
     root.title(title)
 
 def reset_allstudents_password(student_all, teacher_cookies, num, teacher_name):
@@ -651,6 +660,7 @@ def reset_allstudents_password(student_all, teacher_cookies, num, teacher_name):
     do_students_work_button['state'] = DISABLED
     reset_allstudents_password_button['state'] = DISABLED
     logoutbutton['state'] = DISABLED
+    download_students_xlsx_button['state'] = DISABLED
     t.config(state=NORMAL)
     t.delete("1.0","end")
     t.insert("end", "开始检测网络连通性..."+ "\n", "tag_3")
@@ -685,6 +695,7 @@ def reset_allstudents_password(student_all, teacher_cookies, num, teacher_name):
     do_students_work_button['state'] = NORMAL
     reset_allstudents_password_button['state'] = NORMAL
     logoutbutton['state'] = NORMAL
+    download_students_xlsx_button['state'] = NORMAL
     #students_label.place_forget()
     root.update()
     root.title(title)
@@ -839,7 +850,7 @@ def startmain():
 
 def updataprogram():
     try:
-        html = requests.get("https://xueanquan-fatdeadpanda.netlify.app/getprogram/teaupdatalog")
+        html = requests.get("https://gitee.com/archerfish/xueanquanhelperdownload/raw/master/teaupdatalog")
     except Exception as e:
         tkinter.messagebox.showerror(title='失败',message='网络连接失败，请检查网络环境后再试')
         return 0
@@ -920,6 +931,7 @@ def about():
     except Exception as e:
         tkinter.messagebox.showerror(title='失败',message='网络连接失败，请检查网络环境后再试')
         return 0
+    root.withdraw()
     top = Toplevel()
     top.title('关于')
     tmp = open("xueanquan.ico","wb+")
@@ -1048,6 +1060,12 @@ def about():
     
     Label(top, text="@ MissedYyang ↓",fg = 'green').place(x=25 ,y=120)
     Label(top, text="@ Archerfish ↓",fg = 'green').place(x=175 ,y=120)
+
+    def on_closing():
+        top.destroy()
+        root.wm_deiconify()
+                    
+    top.protocol("WM_DELETE_WINDOW", on_closing)
     
 main_menu.add_command (label="关于作者", command = about)
 
@@ -1118,6 +1136,11 @@ menufortext.add_command(label="复制", command=callback1)
 def popup(event):
     menufortext.post(event.x_root, event.y_root)   # post在指定的位置显示弹出菜单
 t.bind("<Button-3>", popup)  
+
+def on_closing():
+    os._exit(0)
+                    
+root.protocol("WM_DELETE_WINDOW", on_closing)
 
 in_start()
 t.config(state=DISABLED)

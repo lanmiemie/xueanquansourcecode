@@ -1,3 +1,4 @@
+# !! - pip install fake_useragent lxml requests
 import threading
 import webbrowser
 import requests
@@ -145,6 +146,10 @@ def teacher_get_studentlist(cookies, Schoolid, Gradeid, Classroomid, Semesterid,
 
     for stu_name,stu_id,stu_user_id,stu_classroomname,stu_grade in zip(studentname_all,studentid_all,userid_all,classroomname,grade):
         totallist = "list%s"%len(totalitems)
+        if '班' in str(stu_classroomname):
+            pass
+        else:
+            stu_classroomname = str(stu_classroomname) + '班'
         stu_grade_and_classroom = str(stu_grade) +'年级'+ str(stu_classroomname)
         totallist = [stu_name,stu_id,stu_grade_and_classroom,stu_user_id]
         all_list.append(totallist)
