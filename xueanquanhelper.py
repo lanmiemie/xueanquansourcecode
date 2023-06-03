@@ -24,11 +24,11 @@ import logging
 from tkinter import scrolledtext
 from fake_useragent import FakeUserAgent
 import hashlib
-from xueanquanapi import login
+from xueanquanapi import login,get_special,get_homework,get_message
 
 root = Tk()
 #root.attributes("-alpha", 0.8)
-ver = "1.5.2"
+ver = "1.5.3"
 title='安全教育平台助手 - 学生版 '+ver
 root.title(title)
 tmp = open("xueanquan.ico","wb+")
@@ -119,45 +119,6 @@ def download(name, url, header={'Connection': 'keep-alive','User-Agent': 'Mozill
     f.close()
     t.config(state=DISABLED)
 
-def get_message(userid, accesstoken, plainUserId):
-    '''
-    获取假期安全提醒阅读
-    '''
-    title_all = []
-    messageid_all = []
-    url = 'https://guangdong.xueanquan.com/safeapph5/api/noticeService/getMyReceive?userId={0}&parentSortId=2&beginIndex=0&pageSize=20'.format(
-        userid)
-    # print(url)
-    headers = {'Host': 'guangdong.xueanquan.com',
-               'X-UserId': plainUserId,
-               'Accept-Encoding': 'gzip, deflate, br',
-               'X-TrackingId': '3eb4eae5-d97f-45e0-aedb-3d2c949d3424',
-               'Connection': 'keep-alive',
-               'X-EquipmentId': '22CBB69F-D6E4-42F5-B615-F4297D54AE93',
-               'Accept': '*/*',
-               'Accept-Language': 'zh-Hans-HK;q=1',
-               'Authorization': 'Bearer ' + accesstoken,
-               'X-Comefrom': '20227',
-               'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 safetreeapp/1.8.6'}
-    # print(headers)
-    res = requests.get(url=url, headers=headers)
-    # print(res.text)
-    res1 = res.text.replace('\n', '')
-    message = re.findall('({.*?"messageID":.*?})', res1)
-    # print(message)
-
-    for m in message:
-        if '"isRead": true,' in m:
-            pass
-        else:
-            title = re.findall('"title": "(.*?)",', m)[0]
-            messageid = re.findall('"messageID": (.*?),', m)[0]
-            title_all.append(title)
-            messageid_all.append(messageid)
-    # print(title_all,messageid_all)
-    return title_all, messageid_all
-
-
 def do_message(accesstoken, userid, messageId, TitleText, num):
     '''
     阅读提醒,messageId以实现自动取更换
@@ -192,40 +153,10 @@ def do_message(accesstoken, userid, messageId, TitleText, num):
         if num < 4:
             t.insert('end', 'ERROR:  第{0}次重试，事不过三！'.format(num), "tag_red")
             num = num + 1
-            do_message(userid, specialId, step, num)
+            do_message(accesstoken, userid, messageId, TitleText, num)
         else:
             errorcodehas = errorcodehas + 1
             pass
-
-
-def get_homework(userid, accesstoken):
-    '''
-    获取学期任务 and 专题任务
-    学生账号，不分专题任务和学期任务接口，可怕
-    '''
-    title_all = []
-    url_all = []
-    cookies = 'ServerSide=https://guangdong.xueanquan.com/;' + 'UserID=' + userid
-    Authorization = 'Bearer ' + accesstoken
-    url = 'https://applet.xueanquan.com/pt/guangdong/safeapph5/api/v1/homework/homeworklist'
-    headers = {'Host': 'applet.xueanquan.com',
-               'Origin': 'https://safeh5.xueanquan.com',
-               'Accept-Encoding': 'gzip, deflate, br',
-               'Cookie': cookies,
-               'Connection': 'keep-alive',
-               'Accept': 'application/json, text/plain, */*',
-               'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 safetreeapp/1.8.6',
-               'Authorization': Authorization,
-               'Referer': 'https://safeh5.xueanquan.com/safeedu/homeworkList'}
-    res = requests.get(url=url, headers=headers)
-    # print(res.text)
-    res1 = res.text.replace('\n', '').replace('  ', '')
-    # print(res1)
-    work_all = re.findall('("linkUrl":.*?),"publishDateTime"', res1)
-    # print(work_all)
-    # 这里安全➕专题都这里、下面运行需要想个办法，分开去do
-    return work_all
-
 
 def do_homework(courseid, gradeid, userid, num):
     '''
@@ -249,7 +180,9 @@ def do_homework(courseid, gradeid, userid, num):
                     'Referer': 'https://guangdong.xueanquan.com/html/platform/student/skilltrain.html?gid=485&li=696&externalUrl=https%3A%2F%2Fsafeh5.xueanquan.com%2Fsafeedu%2FhomeworkList&page_id=121',
                     'Accept-Language': 'zh-cn',
                     'Accept-Encoding': 'gzip, deflate, br'}
+        
         res2 = requests.get(url=url2, headers=headers2)
+
         videoid = str(re.findall('"contentId": (.*?),', res2.text)).replace("'",'').replace(']','').replace('[','')
         workid = str(re.findall('"workId": (.*?),', res2.text)).replace("'",'').replace(']','').replace('[','')
         fid = str(re.findall('"fid": (.*?),', res2.text)).replace("'",'').replace(']','').replace('[','')
@@ -303,14 +236,11 @@ def do_homework(courseid, gradeid, userid, num):
         headers4 = {'Host': 'yyapi.xueanquan.com',
                     'Content-Type': 'application/json;charset=utf-8',
                     'Origin': 'https://guangdong.xueanquan.com',
-                    #'Accept-Encoding': 'gzip, deflate, br',
+                    'Accept-Encoding': 'gzip, deflate, br',
                     'Cookie': cookies,
                     'Connection': 'keep-alive',
                     'Accept': '*/*',
                     'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 safetreeapp/1.8.6',
-                    #'Referer': 'https://guangdong.xueanquan.com/html/platform/student/skilltrain.html?gid=485&li=696&externalUrl=https%3A%2F%2Fsafeh5.xueanquan.com%2Fsafeedu%2FhomeworkList&page_id=121',
-                    #'Content-Length': '213'
-                    #'Accept-Language': 'zh-cn'
                     }
         json4 = {"workId":workid,
                  "fid":fid,
@@ -323,6 +253,14 @@ def do_homework(courseid, gradeid, userid, num):
 
         res4 = requests.post(url=url4, headers=headers4, json=json4)
         print(res4.text)
+
+        get_state = str(re.findall('"success": (.*?),', res4.text)).replace("'",'').replace(']','').replace('[','')
+
+        if get_state == 'true':
+            print("答题成功")
+            pass
+        else:
+            raise Exception('答题失败')
         
     except Exception as e:
         print(e)
@@ -333,54 +271,6 @@ def do_homework(courseid, gradeid, userid, num):
         else:
             errorcodehas = errorcodehas + 1
             pass
-
-
-def get_special(url, userid):
-    '''
-    获取专题任务id信息
-    '''
-    try:
-        print('正在获取安全专题信息..........')
-        value1 = ''
-        print('链接1:', url)
-        # cookies = 'ServerSide=https://guangdong.xueanquan.com/;' + 'UserI=' + userid
-        headers = {'User-Agent': FakeUserAgent().random,
-                   #'Cookie': cookies
-                   }
-        res = requests.get(url=url, headers=headers, allow_redirects=True)
-        # res.encoding='utf-8'
-        # print(res.text)
-        value = re.findall("location.replace(.*?);", res.text)[0]
-        # print(value)
-        value1 = value.split("'")[1]
-        url2 = url.replace('index.html', 'message.html').replace('?require-un=true', '' )
-        print('留言列表:', url2)
-        getsd= requests.get(url=url2, headers=headers)
-        getsddata = etree.HTML(getsd.text)
-        getsparesd = getsddata.xpath("//title[normalize-space()]/text()")
-        getsparesda = str(getsparesd)
-        getsparesdtext = getsparesda.replace("'", '').replace("[", '').replace("]", '')
-        
-
-    except Exception as e:
-        print(e)
-        value1 = value.split('"')[1]
-        
-    finally:
-        # print(value1)
-        url1 = url.replace('index.html', value1)
-        print('链接2:', url1)
-        res1 = requests.get(url=url1, headers=headers)
-        # print(res1.text)
-        # data-specialId ="732"
-        # 处理一下，避免出错
-        res2 = res1.text.replace(' ', '')
-        # print(res2)
-        id_all = re.findall('data-specialId="(.*?)"', res2)[0]
-
-    print('专题id:  ', id_all)
-    print('备用专题id:  ',getsparesdtext)
-    return id_all,getsparesdtext;
 
 def do_special(userid, specialId, sparespecialId, step, num):
     '''
@@ -432,7 +322,7 @@ def do_special(userid, specialId, sparespecialId, step, num):
         if num < 4:
             t.insert('end', 'ERROR:  第{0}次重试，事不过三！'.format(num), "tag_red")
             num = num + 1
-            do_special(userid, specialId, step, num)
+            do_special(userid, specialId, sparespecialId, step, num)
         else:
             errorcodehas = errorcodehas+1
             pass
@@ -475,7 +365,7 @@ def do_holiday(userid, schoolYear, semester, step):
         if num < 4:
             t.insert('end', 'ERROR:  第{0}次重试，事不过三！'.format(num), "tag_red")
             num = num + 1
-            do_special(userid, specialId, step, num)
+            do_holiday(userid, schoolYear, semester, step)
         else:
             errorcodehas = errorcodehas+1
             pass
@@ -569,7 +459,7 @@ def main(username, password):
 def startmain():
         mystd = myStdout()
         t.config(state=NORMAL)
-        t.tag_config("tag_1", backgroun="yellow", foreground="red")
+        t.tag_config("tag_1", backgroun="yellow", foreground="red") # type: ignore
         t.tag_config("tag_3", foreground="green")
         global errorcodehas
         #tkinter.messagebox.showinfo(title='安全教育助手平台（学生版）', message="防沉迷助手提醒您：为了尽可能保障每个活动任务能够顺利完成，速度会慢点哦！")
@@ -638,13 +528,13 @@ def startmain():
 
 def updataprogram():
     try:
-        html = requests.get("https://xueanquan-fatdeadpanda.netlify.app/getprogram/stuupdatalog")
+        html = requests.get("https://gitee.com/archerfish/xueanquanhelperdownload/raw/master/stuupdatalog")
     except Exception as e:
         tkinter.messagebox.showerror(title='失败',message='网络连接失败，请检查网络环境后再试')
         return 0
-    url = 'https://xueanquan-fatdeadpanda.netlify.app/getprogram/stuupdatalog'
-    ver_url = 'https://xueanquan-fatdeadpanda.netlify.app/getprogram/stuver'
-    hashcheck_url = 'https://xueanquan-fatdeadpanda.netlify.app/getprogram/hashcheck'
+    url = 'https://gitee.com/archerfish/xueanquanhelperdownload/raw/master/stuupdatalog'
+    ver_url = 'https://gitee.com/archerfish/xueanquanhelperdownload/raw/master/stuver'
+    hashcheck_url = 'https://gitee.com/archerfish/xueanquanhelperdownload/raw/master/hashcheck'
     header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36'}
     a = requests.get(url, headers = header).text
     b = requests.get(ver_url, headers = header).text.replace("\n", "")
@@ -855,7 +745,7 @@ t = scrolledtext.ScrolledText(root, font=('Consolas', 8))
 t.place(x=340, y=20,width=355,height=310)
 t.tag_config("tag_blue", foreground="blue")
 t.tag_config("tag_red", foreground="red")
-t.tag_config("tag_yellow", backgroun="yellow", foreground="red")
+t.tag_config("tag_yellow", backgroun="yellow", foreground="red") # type: ignore
 t.tag_config("tag_green", foreground="green")
 t.insert('end', 'LOG输出\n', "tag_blue")
 
@@ -873,7 +763,7 @@ def popup(event):
     menufortext.post(event.x_root, event.y_root)   # post在指定的位置显示弹出菜单
 t.bind("<Button-3>", popup)  
 
-#in_start()
+in_start()
 t.config(state=DISABLED)
 
 #root.wm_attributes('-topmost','true')

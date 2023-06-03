@@ -1,1 +1,1 @@
-pyinstaller -Fwi favicon.ico xueanquanhelper.py --onefile --collect-datas=fake_useragent && cd dist && python hashjisuan.py && cd ..\
+pyinstaller -Fwi favicon.ico xueanquanhelper.py --version-file=file_version_info.txt --onefile --collect-datas=fake_useragent && cd dist && python hashjisuan.py && cd ..\
