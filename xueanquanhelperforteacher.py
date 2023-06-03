@@ -22,7 +22,7 @@ from xueanquanapi import teacher_get_schoolid, teacher_get_studentlist, login, t
 
 root = Tk()
 #root.attributes("-alpha", 0.8)
-ver = "1.3.2"
+ver = "1.3.0"
 title='安全教育平台助手 - 教师版 '+ver
 root.title(title)
 tmp = open("xueanquan.ico","wb+")
@@ -865,7 +865,7 @@ def updataprogram():
         y = tkinter.messagebox.askyesno(title='喵呜~~ 检测到新版本!!!',message='目前版本为 '+ver +'\n\n最新版本为 '+b +'\n\n'+a)
         if y == False:
             return 0
-        Download_a1='https://ghproxy.com/https://github.com/lanmiemie/xueanquandownload/blob/master/xueanquanhelperforteacher.exe'
+        Download_a1='https://xueanquan-fatdeadpanda.netlify.app/getprogram/xueanquanhelperforteacher.exe'
         #a2=requests.get(Download_a1,headers=header,stream=True)
         #with open("./version-"+b +".exe","wb+") as code:
         #    code.write(a2.content)
