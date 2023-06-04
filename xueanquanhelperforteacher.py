@@ -1,4 +1,5 @@
 # !! - pip install fake_useragent pillow lxml requests
+import io
 import re
 from tkinter import *
 import tkinter.ttk
@@ -18,11 +19,11 @@ import tkinter.filedialog
 from tkinter import scrolledtext
 from fake_useragent import FakeUserAgent
 import hashlib
-from xueanquanapi import teacher_get_schoolid, teacher_get_studentlist, login, teacher_get_students, teacher_get_students_xlsx, get_message, get_homework, get_special, teacher_get_special_list
+from xueanquanapi import *
 
 root = Tk()
 #root.attributes("-alpha", 0.8)
-ver = "1.3.0"
+ver = "1.5.0"
 title='安全教育平台助手 - 教师版 '+ver
 root.title(title)
 tmp = open("xueanquan.ico","wb+")
@@ -42,6 +43,7 @@ y = int((screenHeight - winHeight) / 2)
 root.geometry("%sx%s+%s+%s" % (winWidth, winHeight, x, y))
 root.resizable(0,0)
 port = StringVar()
+return_text = StringVar()
 
 errorcodehas = 0
 pointcode = 0
@@ -85,6 +87,105 @@ def back_window_size():
     y = int((screenHeight - winHeight) / 2)
     root.geometry("%sx%s+%s+%s" % (winWidth, winHeight, x, y))
     root.resizable(0,0)
+
+def get_scan_result_for_tk(EncodeSceneId):
+
+    num = 1
+
+    url = 'https://appapi.xueanquan.com/usercenter/api/v5/wx/scan-result?encodeSceneId={0}'.format(EncodeSceneId)
+
+    headers = { 'Accept': '*//*',
+                'Accept-Encoding': 'gzip',
+                'Accept-Language': 'zh-CN,zh;q=0.9',
+                'Connection': 'keep-alive',
+                'Host': 'appapi.xueanquan.com',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36'
+            }
+        
+    data = {' '}
+
+    def checkstatus(num):
+        res = requests.post(url=url, headers=headers, data=data)
+        #print(res.text)
+        global timer
+        timer = threading.Timer(0.2,checkstatus)
+        # 获取登陆状态
+        statuscode = str(re.findall('"status":"(.*?)",', res.text)).replace("'",'').replace(']','').replace('[','')
+        # 判断登陆状态
+        if statuscode == 'Error':
+            return_text.set('扫码已过期，正在重新获取')
+            # 重新调用获取函数
+            loading_qrcode()
+            return 0
+        elif  statuscode == 'Success':
+            global teacher_cookies
+            global student_all
+            global classroomname
+            # 当状态码为登陆成功时获取用户信息
+            useridforcookie = str(re.findall('UserID=(.*?);', str(res.headers['Set-Cookie']))).replace("'",'').replace(']','').replace('[','')
+            domainforcookie = str(re.findall('ServerSide=(.*?);', str(res.headers['Set-Cookie']))).replace("'",'').replace(']','').replace('[','').replace('%3A',':').replace("%2F",'/')
+            cookies = 'ServerSide={0};UserID={1}'.format(domainforcookie, useridforcookie)
+            userid,username,usertype,name,schoolname,grade,classname = get_scan_user_info(cookies)
+            if usertype == '班主任':
+                return_text.set('扫码成功 '+name+'老师 你好,我将在3秒内为你跳转至主页面')
+                accesstoken='None'
+                plainUserId='None'
+                tip='None'
+                teacher_cookies = cookies
+                student_all = teacher_get_students(teacher_cookies)
+                classroomname = str(classname).replace(' ','')
+                #print(teacher_cookies,student_all)
+                time.sleep(3)
+                lf_qrcode.pack_forget()
+                lb_status.pack_forget()
+                label_qrcode.pack_forget()
+                #main_menu.delete(3,'end')
+                main_page(accesstoken,domainforcookie, useridforcookie, name, plainUserId, usertype, tip, classname, schoolname)
+                timer.cancel()
+                return 0
+            else:
+                return_text.set('你使用的不是教师账号,将在3秒后重新获取二维码')
+                time.sleep(3)
+                loading_qrcode()
+                timer.cancel()
+                return 0
+            # 取消循环
+            timer.cancel()
+            return 0
+        elif  statuscode == 'Wait':
+            if num == 1:
+                return_text.set('等待扫码')
+                num = num + 1
+            elif  num == 2:
+                return_text.set('等待扫码.')
+                num = num + 1
+            elif  num == 3:
+                return_text.set('等待扫码..')
+                num = num + 1
+            elif  num == 4:
+                return_text.set('等待扫码...')
+                num = 1
+            else:
+                return_text.set('等待扫码')
+        else:
+            return_text.set('未知状态\n'+ statuscode)
+
+        timer = threading.Timer(0.2,lambda:checkstatus(num))
+        timer.start()
+
+    timer = threading.Timer(0.2,lambda:checkstatus(num))
+    timer.start()
+
+def loading_qrcode():
+    qrcode_url,encodeid = get_login_qrcode()
+    image_bytes = requests.get(qrcode_url).content
+    data_stream = io.BytesIO(image_bytes)
+    pil_image = Image.open(data_stream)
+    global tk_image
+    tk_image = ImageTk.PhotoImage(pil_image)
+    label_qrcode.config(image=tk_image)
+    label_qrcode.image=tk_image
+    get_scan_result_for_tk(encodeid)
 
 def download(name, url, cookies, header={'Connection': 'keep-alive','User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36'}, interval=0.5):
     def MB(byte):
@@ -187,6 +288,7 @@ def log_out():
     back_window_size()
     lf1.place(x=8, y=8,width=330,height=150)
     loginbutton.place(x=120,y=200)
+    main_menu.add_command (label="扫码登陆", command = lambda:qrcode_login(mode='QRCODE'))
     root.title(title)
     
 def reset_passward(cookie, studentid, num, in_treeview):
@@ -589,7 +691,6 @@ def main(in_treeview, username, password):
         mystd.restoreStd()
         pass
     
-
 def do_students_work(student_all, teacher_cookies, num, teacher_name):
     yes_or_no = tkinter.messagebox.askokcancel('你需要了解的事','使用该功能会将所有学生账号密码修改为默认密码\n您是否继续进行该操作?')
     if yes_or_no == False:
@@ -700,6 +801,132 @@ def reset_allstudents_password(student_all, teacher_cookies, num, teacher_name):
     root.update()
     root.title(title)
 
+def main_page(accesstoken, serverside, userid, name, plainUserId, studentorteacher, tip, classroomname, schoolname):
+    main_menu.delete(3,'end')
+    mystd = myStdout()
+    t.config(state=NORMAL)
+    t.tag_config("tag_1", backgroun="yellow", foreground="red")
+    t.tag_config("tag_3", foreground="green")
+    global errorcodehas
+    global teacher_cookies
+    global student_all
+    global teacher_name
+    #global classroomname
+    if name != '':
+        #print(studentorteacher)
+        studentorteacher = str(studentorteacher).replace('"','')
+        if studentorteacher == '班主任':
+            #root.title('尊敬的 ' + name + ' 老师 欢迎您!!!!!')
+            root.title(title)
+            #t.delete("1.0","end")
+            #t.insert("end", "\n")
+            loginbutton.place_forget()
+            lf1.place_forget()
+            t.insert("end", "正在获取该账号的信息-----" + "\n", "tag_1")
+            teacher_cookies = 'ServerSide={0};UserID={1}'.format(serverside, userid)
+            teacher_name = name
+            num = 1
+            winWidth = 1100
+            winHeight = 350
+            screenWidth = root.winfo_screenwidth()
+            screenHeight = root.winfo_screenheight()
+            x = int((screenWidth - winWidth) / 2)
+            y = int((screenHeight - winHeight) / 2)
+            root.geometry("%sx%s+%s+%s" % (winWidth, winHeight, x, y))
+            student_all = teacher_get_students(teacher_cookies)
+            showteacherinfo.place(x=8, y=8,width=330,height=150)
+            Label(showteacherinfo, text='教师姓名: '+str(teacher_name)).place(x=40,y=10)
+            Label(showteacherinfo, text='所在学校: '+str(schoolname)).place(x=40,y=35)
+            Label(showteacherinfo, text='所在班级: '+str(classroomname)).place(x=40,y=60)
+            Label(showteacherinfo, text='学生总数: '+str(len(student_all))).place(x=40,y=85)
+            reset_allstudents_password_button.place(x=30,y=180)
+            do_students_work_button.place(x=30,y=210)
+            download_students_xlsx_button.place(x=30,y=240)
+            lf_for_students.place(x=340, y=8,width=403,height=340)
+            lf_for_text.place(x=745, y=8,width=353,height=340)
+            logoutbutton.place(x=230,y=210)
+            Schoolidtext, Gradeidtext, Classroomidtext, Semesteridtext, UserTypeidtext, OrderColumnidtext = teacher_get_schoolid(teacher_cookies)
+            get_all_list = teacher_get_studentlist(teacher_cookies, Schoolidtext, Gradeidtext, Classroomidtext, Semesteridtext, UserTypeidtext, OrderColumnidtext)
+            for all_list in get_all_list:
+                tree1.insert('', END, values=all_list)
+                    
+            def get_treeview_students_information(self):
+                root.withdraw()
+                treeview_info = Toplevel()
+                treeview_info.title('提示')
+                tmp = open("xueanquan.ico","wb+")
+                tmp.write(base64.b64decode(img))
+                tmp.close()
+                global tmpico
+                tmpico = ImageTk.PhotoImage(file="xueanquan.ico")
+                treeview_info.iconphoto(False ,tmpico)
+                os.remove("xueanquan.ico")
+                winWidth = 400
+                winHeight = 200
+                num = 1
+                screenWidth = root.winfo_screenwidth()
+                screenHeight = root.winfo_screenheight()
+                x = int((screenWidth - winWidth) / 2)
+                y = int((screenHeight - winHeight) / 2)
+                treeview_info.geometry("%sx%s+%s+%s" % (winWidth, winHeight, x, y))
+                treeview_info.resizable(0, 0)
+                lf_show_student_information = tkinter.ttk.LabelFrame(treeview_info,text="学生信息")
+                lf_show_student_information.place(x=100, y=8,width=200,height=100)
+
+                id_list = tree1.selection()
+                finally_studentid = ''
+                if id_list is None :
+                    pass
+                for item in id_list:
+                    name1,id1,classroomname1,studentid1 = tree1.item(item)["values"]
+                    Label(lf_show_student_information,text='姓名: '+ name1).place(x=10,y=2)
+                    Label(lf_show_student_information,text='班级: '+ classroomname1).place(x=10,y=25)
+                    Label(lf_show_student_information,text='账号: '+ id1).place(x=10,y=48)
+                    finally_studentid = studentid1
+                    finally_id = id1
+
+                in_treeview = 'YES'
+                def for_one_student_do_work(self,studentid,num):
+                    yes_or_no = tkinter.messagebox.askokcancel('你需要了解的事','使用该功能会将该学生账号密码修改为默认密码\n您是否继续进行该操作?')
+                    if yes_or_no == False:
+                        return 0
+                    global errorcodehas
+                        #in_treeview = 'NO'
+                    t.delete("1.0","end")
+                    reset_passward(teacher_cookies,finally_studentid,num,in_treeview='NO')
+                    main(in_treeview, username=finally_id, password="Aa6666"+finally_id)
+
+                tkinter.ttk.Button(treeview_info,text='重置该学生密码',command=lambda:reset_passward(teacher_cookies,finally_studentid,num,in_treeview)).place(x=60,y=140)
+                tkinter.ttk.Button(treeview_info,text='一键完成所有任务',command=lambda:for_one_student_do_work(teacher_cookies,finally_studentid,num)).place(x=230,y=140)
+               
+                def on_closing():
+                    treeview_info.destroy()
+                    root.wm_deiconify()
+                    
+                treeview_info.protocol("WM_DELETE_WINDOW", on_closing)
+
+            #t.insert("end", name + " 该账号下的所有任务已完成 " + "\n", "tag_3")
+            #t.config(state=DISABLED)
+            #tkinter.messagebox.showinfo(title='提示', message="全部任务都完成啦！\n如恁不相信本助手的完成能力\n恁可以上账号后台观看记录")
+            tree1.bind('<ButtonRelease-1>', get_treeview_students_information)
+            t.insert("end", "获取完毕" + "\n", "tag_1")
+            #t.config(state=DISABLED)
+            mystd.restoreStd()
+            # sys.exit()
+        else:
+            t.delete("1.0","end")
+            t.config(state=DISABLED)
+            tkinter.messagebox.showinfo(title='提示', message="你好 " + name +" 同学!\n\n您输入的不是教师账号,请核对后再试!!!")
+            mystd.restoreStd()
+            root.title(title)
+            pass
+    else:
+        t.delete("1.0","end")
+        t.config(state=DISABLED)
+        tkinter.messagebox.showerror(title='无法登录', message=str(tip))
+        mystd.restoreStd()
+        root.title(title)
+
 def startmain():
         mystd = myStdout()
         t.config(state=NORMAL)
@@ -736,117 +963,7 @@ def startmain():
         accesstoken, serverside, userid, name, plainUserId, studentorteacher, tip, classroomname, schoolname = login(
             username, password)
         # 判断是否登录成功
-        if name != '':
-            if studentorteacher == '"班主任"':
-                #root.title('尊敬的 ' + name + ' 老师 欢迎您!!!!!')
-                root.title(title)
-                #t.delete("1.0","end")
-                #t.insert("end", "\n")
-                loginbutton.place_forget()
-                lf1.place_forget()
-                t.insert("end", "正在获取该账号的信息-----" + "\n", "tag_1")
-                teacher_cookies = 'ServerSide={0};UserID={1}'.format(serverside, userid)
-                teacher_name = name
-                num = 1
-                winWidth = 1100
-                winHeight = 350
-                screenWidth = root.winfo_screenwidth()
-                screenHeight = root.winfo_screenheight()
-                x = int((screenWidth - winWidth) / 2)
-                y = int((screenHeight - winHeight) / 2)
-                root.geometry("%sx%s+%s+%s" % (winWidth, winHeight, x, y))
-                student_all = teacher_get_students(teacher_cookies)
-                showteacherinfo.place(x=8, y=8,width=330,height=150)
-                Label(showteacherinfo, text='教师姓名: '+str(teacher_name)).place(x=40,y=10)
-                Label(showteacherinfo, text='所在学校: '+str(schoolname)).place(x=40,y=35)
-                Label(showteacherinfo, text='所在班级: '+str(classroomname)).place(x=40,y=60)
-                Label(showteacherinfo, text='学生总数: '+str(len(student_all))).place(x=40,y=85)
-                reset_allstudents_password_button.place(x=30,y=180)
-                do_students_work_button.place(x=30,y=210)
-                download_students_xlsx_button.place(x=30,y=240)
-                lf_for_students.place(x=340, y=8,width=403,height=340)
-                lf_for_text.place(x=745, y=8,width=353,height=340)
-                logoutbutton.place(x=230,y=210)
-                Schoolidtext, Gradeidtext, Classroomidtext, Semesteridtext, UserTypeidtext, OrderColumnidtext = teacher_get_schoolid(teacher_cookies)
-                get_all_list = teacher_get_studentlist(teacher_cookies, Schoolidtext, Gradeidtext, Classroomidtext, Semesteridtext, UserTypeidtext, OrderColumnidtext)
-                for all_list in get_all_list:
-                    tree1.insert('', END, values=all_list)
-                    
-                def get_treeview_students_information(self):
-                    root.withdraw()
-                    treeview_info = Toplevel()
-                    treeview_info.title('提示')
-                    tmp = open("xueanquan.ico","wb+")
-                    tmp.write(base64.b64decode(img))
-                    tmp.close()
-                    global tmpico
-                    tmpico = ImageTk.PhotoImage(file="xueanquan.ico")
-                    treeview_info.iconphoto(False ,tmpico)
-                    os.remove("xueanquan.ico")
-                    winWidth = 400
-                    winHeight = 200
-                    num = 1
-                    screenWidth = root.winfo_screenwidth()
-                    screenHeight = root.winfo_screenheight()
-                    x = int((screenWidth - winWidth) / 2)
-                    y = int((screenHeight - winHeight) / 2)
-                    treeview_info.geometry("%sx%s+%s+%s" % (winWidth, winHeight, x, y))
-                    treeview_info.resizable(0, 0)
-                    lf_show_student_information = tkinter.ttk.LabelFrame(treeview_info,text="学生信息")
-                    lf_show_student_information.place(x=100, y=8,width=200,height=100)
-
-                    id_list = tree1.selection()
-                    finally_studentid = ''
-                    if id_list is None :
-                        pass
-                    for item in id_list:
-                        name1,id1,classroomname1,studentid1 = tree1.item(item)["values"]
-                        Label(lf_show_student_information,text='姓名: '+ name1).place(x=10,y=2)
-                        Label(lf_show_student_information,text='班级: '+ classroomname1).place(x=10,y=25)
-                        Label(lf_show_student_information,text='账号: '+ id1).place(x=10,y=48)
-                        finally_studentid = studentid1
-                        finally_id = id1
-
-                    in_treeview = 'YES'
-                    def for_one_student_do_work(self,studentid,num):
-                        yes_or_no = tkinter.messagebox.askokcancel('你需要了解的事','使用该功能会将该学生账号密码修改为默认密码\n您是否继续进行该操作?')
-                        if yes_or_no == False:
-                            return 0
-                        global errorcodehas
-                        #in_treeview = 'NO'
-                        t.delete("1.0","end")
-                        reset_passward(teacher_cookies,finally_studentid,num,in_treeview='NO')
-                        main(in_treeview, username=finally_id, password="Aa6666"+finally_id)
-
-                    tkinter.ttk.Button(treeview_info,text='重置该学生密码',command=lambda:reset_passward(teacher_cookies,finally_studentid,num,in_treeview)).place(x=60,y=140)
-                    tkinter.ttk.Button(treeview_info,text='一键完成所有任务',command=lambda:for_one_student_do_work(teacher_cookies,finally_studentid,num)).place(x=230,y=140)
-               
-                    def on_closing():
-                        treeview_info.destroy()
-                        root.wm_deiconify()
-                    
-                    treeview_info.protocol("WM_DELETE_WINDOW", on_closing)
-
-                #t.insert("end", name + " 该账号下的所有任务已完成 " + "\n", "tag_3")
-                #t.config(state=DISABLED)
-                #tkinter.messagebox.showinfo(title='提示', message="全部任务都完成啦！\n如恁不相信本助手的完成能力\n恁可以上账号后台观看记录")
-                tree1.bind('<ButtonRelease-1>', get_treeview_students_information)
-                t.insert("end", "获取完毕" + "\n", "tag_1")
-                mystd.restoreStd()
-                # sys.exit()
-            else:
-                t.delete("1.0","end")
-                t.config(state=DISABLED)
-                tkinter.messagebox.showinfo(title='提示', message="你好 " + name +" 同学!\n\n您输入的不是教师账号,请核对后再试!!!")
-                mystd.restoreStd()
-                root.title(title)
-                pass
-        else:
-            t.delete("1.0","end")
-            t.config(state=DISABLED)
-            tkinter.messagebox.showerror(title='无法登录', message=str(tip))
-            mystd.restoreStd()
-            root.title(title)
+        main_page(accesstoken, serverside, userid, name, plainUserId, studentorteacher, tip, classroomname, schoolname)
 
 def updataprogram():
     try:
@@ -1069,6 +1186,27 @@ def about():
     
 main_menu.add_command (label="关于作者", command = about)
 
+def qrcode_login(mode):
+    if mode == 'QRCODE':
+        loginbutton.place_forget()
+        lf1.place_forget()
+        lf_qrcode.pack(anchor='center',pady=50)
+        label_qrcode.pack(fill=BOTH, expand='yes')
+        lb_status.pack(anchor='center')
+        loading_qrcode()
+        main_menu.delete(3,'end')
+        main_menu.add_command (label="密码登陆", command = lambda:qrcode_login(mode='PASSWORD'))
+    else:
+        lf_qrcode.pack_forget()
+        label_qrcode.pack_forget()
+        lb_status.pack_forget()
+        lf1.place(x=8, y=8,width=330,height=150)
+        loginbutton.place(x=120,y=200)
+        main_menu.delete(3,'end')
+        main_menu.add_command (label="扫码登陆", command = lambda:qrcode_login(mode='QRCODE'))
+
+main_menu.add_command (label="扫码登陆", command = lambda:qrcode_login(mode='QRCODE'))
+
 def in_start():
     root.title('开始检测网络连通性...')
     try:
@@ -1090,6 +1228,12 @@ lf1 = tkinter.ttk.LabelFrame(root,text="登录信息")
 showteacherinfo = tkinter.ttk.LabelFrame(root,text="教师信息")
 lf_for_students = tkinter.ttk.LabelFrame(root,text="学生信息")
 lf_for_text = tkinter.ttk.LabelFrame(root,text="LOG输出")
+lf_qrcode = tkinter.ttk.LabelFrame(root,text="使用微信扫一扫进行登录",width=110,height=110)
+
+label_qrcode = Label(lf_qrcode, bg='white')
+
+lb_status = Label(root, textvariable=return_text)
+
 tree1 = tkinter.ttk.Treeview(lf_for_students, columns=('xm', 'zh', 'stuclass', 'stuid'),show='headings', selectmode="browse") 
 tree1.heading('xm', text='姓名')
 tree1.heading('zh', text='账号')

@@ -22,7 +22,7 @@ def treeview_teacher_get_special_list():
     tree1.heading('wcbfb', text='完成百分比')
     tree1.heading('ztzt', text='专题状态')
 
-    tree1.column('ztm',anchor='center')
+    tree1.column('ztm',anchor='')
     tree1.column('jzsj',anchor='center')
     tree1.column('wcrs',anchor='center')
     tree1.column('ywcrs',anchor='center')

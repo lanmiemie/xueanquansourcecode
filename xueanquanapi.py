@@ -421,10 +421,10 @@ def get_login_qrcode():
     get_relativeUrl = re.findall('"relativeUrl":"(.*?)",', res.text)
     relativeUrl = str(get_relativeUrl).replace("'",'').replace(']','').replace('[','')
     
-    webbrowser.open(relativeUrl)
-    print(relativeUrl)
-    get_scan_result(Encodesceneid)
-    return Encodesceneid
+    #webbrowser.open(relativeUrl)
+    #print(relativeUrl)
+    #get_scan_result(Encodesceneid)
+    return relativeUrl,Encodesceneid
 
 def get_scan_user_info(cookie):
 
@@ -452,7 +452,7 @@ def get_scan_user_info(cookie):
     classname = '{0}年级{1}'.format(grade,classname)
 
     if usertype == 'Teacher':
-        usertype = '教师'
+        usertype = '班主任'
     elif  usertype == 'Users':
         usertype = '学生'
     else:
@@ -470,7 +470,7 @@ def get_scan_result(EncodeSceneId):
                 'Connection': 'keep-alive',
                 'Host': 'appapi.xueanquan.com',
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36',
-                #'X-Requested-With': 'XMLHttpRequest'
+                'X-Requested-With': 'XMLHttpRequest'
             }
         
     data = {' '}
@@ -484,7 +484,8 @@ def get_scan_result(EncodeSceneId):
         statuscode = str(re.findall('"status":"(.*?)",', res.text)).replace("'",'').replace(']','').replace('[','')
         # 判断登陆状态
         if statuscode == 'Error':
-            print('扫码已过期，正在重新获取')
+            statustext = '扫码已过期，请重新获取'
+            print(statustext)
             # 重新调用获取函数
             get_login_qrcode()
             return 0

@@ -26,7 +26,7 @@ def get_login_qrcode():
     webbrowser.open(relativeUrl)
     print(relativeUrl)
     get_scan_result(Encodesceneid)
-    return Encodesceneid
+    return relativeUrl,Encodesceneid
 
 def get_scan_user_info(cookie):
 
@@ -114,5 +114,5 @@ def get_scan_result(EncodeSceneId):
     timer = threading.Timer(0.2,checkstatus)
     timer.start()
 
-encodeid = get_login_qrcode()
+relativeUrl,encodeid = get_login_qrcode()
 #get_scan_user_info()
