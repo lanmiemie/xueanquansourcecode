@@ -105,13 +105,19 @@ def get_scan_result_for_tk(EncodeSceneId):
     data = {' '}
 
     def checkstatus(num):
+        try:
+            html = requests.get("https://guangdong.xueanquan.com")
+        except Exception as e:
+            tkinter.messagebox.showerror(title='失败',message='网络连接失败\n您可以通过以下操作来帮助您排除网络问题\n\n1. 如果您打开了代理（Clash,Socks), 请将它关闭.\n2.检查网络是否通畅.\n3.检查路由器等设施是否正确连接到互联网.\n4.您压根没有连接到互联网.')
+            t.delete("1.0","end")
+            os._exit(0)
         res = requests.post(url=url, headers=headers, data=data)
         #print(res.text)
         global timer
-        timer = threading.Timer(0.2,checkstatus)
-        # 获取登陆状态
+        timer = threading.Timer(0.5,checkstatus)
+        # 获取登录状态
         statuscode = str(re.findall('"status":"(.*?)",', res.text)).replace("'",'').replace(']','').replace('[','')
-        # 判断登陆状态
+        # 判断登录状态
         if statuscode == 'Error':
             return_text.set('扫码已过期，正在重新获取')
             # 重新调用获取函数
@@ -121,12 +127,13 @@ def get_scan_result_for_tk(EncodeSceneId):
             global teacher_cookies
             global student_all
             global classroomname
-            # 当状态码为登陆成功时获取用户信息
+            # 当状态码为登录成功时获取用户信息
             useridforcookie = str(re.findall('UserID=(.*?);', str(res.headers['Set-Cookie']))).replace("'",'').replace(']','').replace('[','')
             domainforcookie = str(re.findall('ServerSide=(.*?);', str(res.headers['Set-Cookie']))).replace("'",'').replace(']','').replace('[','').replace('%3A',':').replace("%2F",'/')
             cookies = 'ServerSide={0};UserID={1}'.format(domainforcookie, useridforcookie)
             userid,username,usertype,name,schoolname,grade,classname = get_scan_user_info(cookies)
             if usertype == '班主任':
+                timer.cancel()
                 return_text.set('扫码成功 '+name+'老师 你好,我将在3秒内为你跳转至主页面')
                 accesstoken='None'
                 plainUserId='None'
@@ -170,10 +177,10 @@ def get_scan_result_for_tk(EncodeSceneId):
         else:
             return_text.set('未知状态\n'+ statuscode)
 
-        timer = threading.Timer(0.2,lambda:checkstatus(num))
+        timer = threading.Timer(0.5,lambda:checkstatus(num))
         timer.start()
 
-    timer = threading.Timer(0.2,lambda:checkstatus(num))
+    timer = threading.Timer(0.5,lambda:checkstatus(num))
     timer.start()
 
 def loading_qrcode():
@@ -288,7 +295,7 @@ def log_out():
     back_window_size()
     lf1.place(x=8, y=8,width=330,height=150)
     loginbutton.place(x=120,y=200)
-    main_menu.add_command (label="扫码登陆", command = lambda:qrcode_login(mode='QRCODE'))
+    main_menu.add_command (label="扫码登录", command = lambda:qrcode_login(mode='QRCODE'))
     root.title(title)
     
 def reset_passward(cookie, studentid, num, in_treeview):
@@ -605,7 +612,7 @@ def main(in_treeview, username, password):
     num = 1
     global errorcodehas
     #global t
-    # 登陆账号，获取信息
+    # 登录账号，获取信息
     accesstoken, serverside, userid, name, plainUserId, studentorteacher, tip, classroomname, schoolname = login(
         username, password)
     # 获取安全提醒任务
@@ -709,7 +716,7 @@ def do_students_work(student_all, teacher_cookies, num, teacher_name):
     try:
         html = requests.get("https://guangdong.xueanquan.com")
     except Exception as e:
-        tkinter.messagebox.showerror(title='失败',message='网络连接失败，请检查网络环境后再试')
+        tkinter.messagebox.showerror(title='失败',message='网络连接失败\n您可以通过以下操作来帮助您排除网络问题\n\n1. 如果您打开了代理（Clash,Socks), 请将它关闭.\n2.检查网络是否通畅.\n3.检查路由器等设施是否正确连接到互联网.\n4.您压根没有连接到互联网.')
         t.delete("1.0","end")
         return 0
     for studen in student_all:
@@ -955,11 +962,11 @@ def startmain():
         try:
             html = requests.get("https://guangdong.xueanquan.com")
         except Exception as e:
-            tkinter.messagebox.showerror(title='失败',message='网络连接失败，请检查网络环境后再试')
+            tkinter.messagebox.showerror(title='失败',message='网络连接失败\n您可以通过以下操作来帮助您排除网络问题\n\n1. 如果您打开了代理（Clash,Socks), 请将它关闭.\n2.检查网络是否通畅.\n3.检查路由器等设施是否正确连接到互联网.\n4.您压根没有连接到互联网.')
             t.delete("1.0","end")
             return 0
         root.title(username + ' ，正在获取此账号的信息-----')
-        # 登陆账号，获取信息
+        # 登录账号，获取信息
         accesstoken, serverside, userid, name, plainUserId, studentorteacher, tip, classroomname, schoolname = login(
             username, password)
         # 判断是否登录成功
@@ -969,7 +976,7 @@ def updataprogram():
     try:
         html = requests.get("https://gitee.com/archerfish/xueanquanhelperdownload/raw/master/teaupdatalog")
     except Exception as e:
-        tkinter.messagebox.showerror(title='失败',message='网络连接失败，请检查网络环境后再试')
+        tkinter.messagebox.showerror(title='失败',message='网络连接失败\n您可以通过以下操作来帮助您排除网络问题\n\n1. 如果您打开了代理（Clash,Socks), 请将它关闭.\n2.检查网络是否通畅.\n3.检查路由器等设施是否正确连接到互联网.\n4.您压根没有连接到互联网.')
         return 0
     url = 'https://gitee.com/archerfish/xueanquanhelperdownload/raw/master/teaupdatalog'
     ver_url = 'https://gitee.com/archerfish/xueanquanhelperdownload/raw/master/teaver'
@@ -1046,7 +1053,7 @@ def about():
     try:
         html = requests.get("https://xueanquan-fatdeadpanda.netlify.app/getprogram/about")
     except Exception as e:
-        tkinter.messagebox.showerror(title='失败',message='网络连接失败，请检查网络环境后再试')
+        tkinter.messagebox.showerror(title='失败',message='网络连接失败\n您可以通过以下操作来帮助您排除网络问题\n\n1. 如果您打开了代理（Clash,Socks), 请将它关闭.\n2.检查网络是否通畅.\n3.检查路由器等设施是否正确连接到互联网.\n4.您压根没有连接到互联网.')
         return 0
     root.withdraw()
     top = Toplevel()
@@ -1160,7 +1167,7 @@ def about():
 
 
     caidanbotton = Button(top,borderwidth = 2,text = "★★★★★★★★★★★★" + title + "★★★★★★★★★★★★",relief="ridge",state=DISABLED,command=caidan)
-    caidanbotton.place(x=150, y=20)
+    caidanbotton.pack(anchor='center',pady=20)
     #top.attributes("-toolwindow", 1)
     #top.wm_attributes('-topmost','true')
 
@@ -1187,6 +1194,12 @@ def about():
 main_menu.add_command (label="关于作者", command = about)
 
 def qrcode_login(mode):
+    try:
+        html = requests.get("https://guangdong.xueanquan.com")
+    except Exception as e:
+        tkinter.messagebox.showerror(title='失败',message='网络连接失败\n您可以通过以下操作来帮助您排除网络问题\n\n1. 如果您打开了代理（Clash,Socks), 请将它关闭.\n2.检查网络是否通畅.\n3.检查路由器等设施是否正确连接到互联网.\n4.您压根没有连接到互联网.')
+        t.delete("1.0","end")
+        return 0
     if mode == 'QRCODE':
         loginbutton.place_forget()
         lf1.place_forget()
@@ -1195,7 +1208,7 @@ def qrcode_login(mode):
         lb_status.pack(anchor='center')
         loading_qrcode()
         main_menu.delete(3,'end')
-        main_menu.add_command (label="密码登陆", command = lambda:qrcode_login(mode='PASSWORD'))
+        main_menu.add_command (label="密码登录", command = lambda:qrcode_login(mode='PASSWORD'))
     else:
         lf_qrcode.pack_forget()
         label_qrcode.pack_forget()
@@ -1203,9 +1216,9 @@ def qrcode_login(mode):
         lf1.place(x=8, y=8,width=330,height=150)
         loginbutton.place(x=120,y=200)
         main_menu.delete(3,'end')
-        main_menu.add_command (label="扫码登陆", command = lambda:qrcode_login(mode='QRCODE'))
+        main_menu.add_command (label="扫码登录", command = lambda:qrcode_login(mode='QRCODE'))
 
-main_menu.add_command (label="扫码登陆", command = lambda:qrcode_login(mode='QRCODE'))
+main_menu.add_command (label="扫码登录", command = lambda:qrcode_login(mode='QRCODE'))
 
 def in_start():
     root.title('开始检测网络连通性...')
