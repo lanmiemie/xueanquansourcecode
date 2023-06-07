@@ -23,7 +23,7 @@ from xueanquanapi import *
 
 root = Tk()
 #root.attributes("-alpha", 0.8)
-ver = "1.5.0"
+ver = "1.5.1"
 title='安全教育平台助手 - 教师版 '+ver
 root.title(title)
 tmp = open("xueanquan.ico","wb+")
@@ -42,6 +42,7 @@ x = int((screenWidth - winWidth) / 2)
 y = int((screenHeight - winHeight) / 2)
 root.geometry("%sx%s+%s+%s" % (winWidth, winHeight, x, y))
 root.resizable(0,0)
+
 port = StringVar()
 return_text = StringVar()
 
@@ -899,9 +900,11 @@ def main_page(accesstoken, serverside, userid, name, plainUserId, studentorteach
                         return 0
                     global errorcodehas
                         #in_treeview = 'NO'
+                    t.config(state=NORMAL)
                     t.delete("1.0","end")
                     reset_passward(teacher_cookies,finally_studentid,num,in_treeview='NO')
                     main(in_treeview, username=finally_id, password="Aa6666"+finally_id)
+                    t.config(state=DISABLED)
 
                 tkinter.ttk.Button(treeview_info,text='重置该学生密码',command=lambda:reset_passward(teacher_cookies,finally_studentid,num,in_treeview)).place(x=60,y=140)
                 tkinter.ttk.Button(treeview_info,text='一键完成所有任务',command=lambda:for_one_student_do_work(teacher_cookies,finally_studentid,num)).place(x=230,y=140)
