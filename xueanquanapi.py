@@ -50,15 +50,18 @@ def login(username, password):
         serverside = re.findall('"webUrl":"(.*?)"', res.text)[0]
         studentorteacher = re.findall('"regionalName":(.*?),', res.text)[0]
         name = re.findall('"nickName":"(.*?)"', res.text)[0]
-        accesstoken = re.findall('"accessToken":"(.*?)"', res.text)[0]
+        accesstoken = 'Bearer ' + str(re.findall('"accessToken":"(.*?)"', res.text)[0])
         plainUserId = re.findall('"plainUserId":(.*?),', res.text)[0]
         classroomname = re.findall('"classroomName":"(.*?)"', res.text)[0]
         schoolname = re.findall('"schoolName":"(.*?)"', res.text)[0]
+        
     return accesstoken, serverside, userid, name, plainUserId, studentorteacher, tip, classroomname, schoolname
 
 def teacher_get_schoolid(cookies):
     '''
     获取教师各类ID, 例: Schoolid, Gradeid, Classroomid.等.....
+    来自 Archerfish
+    
     '''
     url = 'https://guangdong.xueanquan.com/safeapph5/accountSituation/_ClassTeacher'
     headers = {'Accept': '*//*',
@@ -69,8 +72,6 @@ def teacher_get_schoolid(cookies):
                'Cookie': cookies,
                'Host': 'guangzhou.xueanquan.com',
                'Origin': 'https://guangzhou.xueanquan.com',
-               #'Referer': 'https://guangzhou.xueanquan.com/EduAdmin/Home/Index',
-               #'sec-ch-ua': '"Not A;Brand";v="99", "Chromium";v="100", "Google Chrome";v="100"',
                'sec-ch-ua-mobile': '?0',
                'sec-ch-ua-platform': 'Windows',
                'Sec-Fetch-Dest': 'empty',
@@ -107,6 +108,7 @@ def teacher_get_studentlist(cookies, Schoolid, Gradeid, Classroomid, Semesterid,
     教师获取学生姓名和账号, ID
     以 List 的形式输出
     {'姓名', '账号', '班别', '学生ID'}
+    来自 Archerfish
     '''
     url = 'https://guangdong.xueanquan.com/safeapph5/api/safeEduCardinalData/getAppUserlist'
 
@@ -161,7 +163,7 @@ def teacher_get_studentlist(cookies, Schoolid, Gradeid, Classroomid, Semesterid,
 
 def teacher_get_students(cookies):
     '''
-    教师单独学生账号，studentid
+    教师获取单独学生账号，studentid
     （只返回学生账号）
     来自 MissedYyang
     以 List 的形式返回
@@ -208,6 +210,7 @@ def teacher_get_students(cookies):
 def teacher_get_students_xlsx(cookies):
     '''
     教师获取学生账号表格下载地址
+    来自 Archerfish
     '''
     url = 'https://guangzhou.xueanquan.com/eduadmin/ClassManagement/ClassManagement'
     headers = {'Accept': '*//*',
@@ -365,6 +368,7 @@ def teacher_get_special_list(cookie):
     教师获取专题任务信息
     以 List 的形式输出
     {'专题名', '截止时间', '完成人数', '应完成人数', '完成百分比', '专题状态'}
+    来自 Archerfish
     '''
     all_special_list = list()
     get_today = datetime.date.today()
@@ -403,6 +407,11 @@ def teacher_get_special_list(cookie):
     return all_special_list
 
 def get_login_qrcode():
+    '''
+    获取登录二维码
+    （微信扫一扫）
+    来自 Archerfish
+    '''
 
     url = 'https://appapi.xueanquan.com/usercenter/api/v5/wx/wx-login-qrcode'
 
@@ -427,6 +436,10 @@ def get_login_qrcode():
     return relativeUrl,Encodesceneid
 
 def get_scan_user_info(cookie):
+    '''
+    扫码成功后获取用户信息
+    来自 Archerfish
+    '''
 
     url = 'https://huodongapi.xueanquan.com/p/guangdong/Topic/topic/platformapi/api/v1/users/user-info'
 
@@ -461,6 +474,12 @@ def get_scan_user_info(cookie):
     return userid,username,usertype,name,schoolname,grade,classname
 
 def get_scan_result(EncodeSceneId):
+    '''
+    获取二维码状态
+    （若是 '等待扫码',将一直循环获取状态）
+    （若是 '扫码已过期，正在重新获取',将会重新获取二维码链接并打开）
+    来自 Archerfish
+    '''
 
     url = 'https://appapi.xueanquan.com/usercenter/api/v5/wx/scan-result?encodeSceneId={0}'.format(EncodeSceneId)
 
@@ -484,7 +503,7 @@ def get_scan_result(EncodeSceneId):
         statuscode = str(re.findall('"status":"(.*?)",', res.text)).replace("'",'').replace(']','').replace('[','')
         # 判断登陆状态
         if statuscode == 'Error':
-            statustext = '扫码已过期，请重新获取'
+            statustext = '扫码已过期，正在重新获取'
             print(statustext)
             # 重新调用获取函数
             get_login_qrcode()

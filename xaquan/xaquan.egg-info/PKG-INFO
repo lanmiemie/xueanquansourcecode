@@ -1,16 +1,13 @@
-Metadata-Version: 1.2
+Metadata-Version: 2.1
 Name: xaquan
 Version: 1.0.0
 Summary: 安全教育平台api & 爬虫
 Home-page: https://github.com/lanmiemie/xaquan
 Author: Archerfish1114
 Author-email: archerfish1114@163.com
-License: UNKNOWN
 Project-URL: Bug Reports, https://github.com/lanmiemie/xaquan/issues
 Project-URL: Source, https://github.com/lanmiemie/xaquan
-Description: UNKNOWN
 Keywords: API sdk spider
-Platform: UNKNOWN
 Classifier: Intended Audience :: Developers
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Programming Language :: Python :: 3

@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(
-    name='xueaq',
+    name='xaquan',
     version='1.0.0',
     description='安全教育平台api & 爬虫',
     url="https://github.com/lanmiemie/xaquan",
