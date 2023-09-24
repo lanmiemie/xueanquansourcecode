@@ -295,7 +295,7 @@ def get_homework(userid, accesstoken):
     title_all = []
     url_all = []
     cookies = 'ServerSide=https://guangdong.xueanquan.com/;' + 'UserID=' + userid
-    Authorization = 'Bearer ' + accesstoken
+    Authorization = accesstoken
     url = 'https://applet.xueanquan.com/pt/guangdong/safeapph5/api/v1/homework/homeworklist'
     headers = {'Host': 'applet.xueanquan.com',
                'Origin': 'https://safeh5.xueanquan.com',
@@ -307,7 +307,7 @@ def get_homework(userid, accesstoken):
                'Authorization': Authorization,
                'Referer': 'https://safeh5.xueanquan.com/safeedu/homeworkList'}
     res = requests.get(url=url, headers=headers)
-    # print(res.text)
+    #print(res.text)
     res1 = res.text.replace('\n', '').replace('  ', '')
     # print(res1)
     work_all = re.findall('("linkUrl":.*?),"publishDateTime"', res1)
@@ -371,8 +371,14 @@ def teacher_get_special_list(cookie):
     来自 Archerfish
     '''
     all_special_list = list()
-    get_today = datetime.date.today()
-    url = 'https://applet.xueanquan.com/pt/guangdong/safeapph5/api/safeEduScore/getSpecailProgress?semester=3&schoolYear='+str(get_today.year)
+    #get_today = datetime.date.today()
+    get_month = datetime.datetime.today().month
+    get_year = datetime.datetime.today().year
+
+    if get_month >= 9:
+        get_year = get_year + 1 
+        #print(get_year)
+    url = 'https://applet.xueanquan.com/pt/guangdong/safeapph5/api/safeEduScore/getSpecailProgress?semester=3&schoolYear='+str(get_year)
     headers = {'Host': 'applet.xueanquan.com',
                'Origin': 'https://safeh5.xueanquan.com',
                'Accept-Encoding': 'gzip, deflate, br',
