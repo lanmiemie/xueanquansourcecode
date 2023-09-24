@@ -23,8 +23,8 @@ from xueanquanapi import *
 
 root = Tk()
 #root.attributes("-alpha", 0.8)
-ver = "1.5.1"
-title='安全教育平台助手 - 教师版 '+ver
+ver = "1.5.2"
+title='安全教育平台助手 - 教师版 Hotfix '+ver
 root.title(title)
 tmp = open("xueanquan.ico","wb+")
 tmp.write(base64.b64decode(img))
@@ -286,6 +286,7 @@ def log_out():
     logoutbutton.place_forget()
     do_students_work_button.place_forget()
     showteacherinfo.place_forget()
+    check_student_sp_button.place_forget()
     download_students_xlsx_button.place_forget()
     t.config(state=NORMAL)
     t.delete("1.0","end")
@@ -616,6 +617,7 @@ def main(in_treeview, username, password):
     # 登录账号，获取信息
     accesstoken, serverside, userid, name, plainUserId, studentorteacher, tip, classroomname, schoolname = login(
         username, password)
+    #print(accesstoken, serverside, userid, name, plainUserId, studentorteacher, tip, classroomname, schoolname)
     # 获取安全提醒任务
     title_all, messageid_all = get_message(userid, accesstoken, plainUserId)
     # print(title_all,messageid_all)
@@ -633,7 +635,7 @@ def main(in_treeview, username, password):
 
     # 获取学期任务和专题任务
     work_all = get_homework(userid, accesstoken)
-    # print(work_all)
+    #print(work_all)
     for w in work_all:
         # print(w)
         # print(re.findall('"linkUrl": "(.*?)"',w)[0])
@@ -662,7 +664,35 @@ def main(in_treeview, username, password):
                 # print(gradeid,courseid)
                 # 未进行测试___没有账号测试
                 do_homework(courseid, gradeid, userid, num)
+            elif  '"subTitle": "专题活动",' in w:
+                # 安全专题任务
+                title = re.findall('"title": "(.*?)",', w)[0]
+                url = re.findall('"linkUrl": "(.*?)"', w)[0]
 
+                print('YES-正在运行---完成专题学习任务:{}'.format(title))
+                # print(url)
+
+                if 'summer' in url:
+                    schoolYear = re.findall('summer(.*?)/', url)[0]
+                    # print(schoolYear)
+                    # 暑假是，学期为2
+                    semester = 2
+                    do_holiday(userid, schoolYear, semester, step=1)
+                    do_holiday(userid, schoolYear, semester, step=2)
+                elif 'winter' in url:
+                    schoolYear = re.findall('winter(.*?)/', url)[0]
+                    semester = 1
+                    do_holiday(userid, schoolYear, semester, step=1)
+                    do_holiday(userid, schoolYear, semester, step=2)
+                else:
+                    # 获取id
+                    # 完成专题任务
+
+                    id_all,getsparesdtext = get_special(url, userid)
+                    specialId = id_all
+                    sparespecialId = getsparesdtext
+                    do_special(userid, specialId, sparespecialId, step=1, num=num)
+                    do_special(userid, specialId, sparespecialId, step=2, num=num)
             else:
                 # 安全专题任务
                 title = re.findall('"title": "(.*?)",', w)[0]
@@ -752,6 +782,86 @@ def do_students_work(student_all, teacher_cookies, num, teacher_name):
     logoutbutton['state'] = NORMAL
     download_students_xlsx_button['state'] = NORMAL
     root.title(title)
+
+def treeview_teacher_get_special_list(cookie):
+    root.withdraw()
+    top = Toplevel()
+    top.title("专题信息")
+    tmp = open("xueanquan.ico", "wb+")
+    tmp.write(base64.b64decode(img))
+    tmp.close()
+    global tmpico
+    tmpico = ImageTk.PhotoImage(file="xueanquan.ico")
+    top.iconphoto(False, tmpico)
+    os.remove("xueanquan.ico")
+    winWidth = 850
+    winHeight = 200
+    screenWidth = root.winfo_screenwidth()
+    screenHeight = root.winfo_screenheight()
+    x = int((screenWidth - winWidth) / 2)
+    y = int((screenHeight - winHeight) / 2)
+    top.geometry("%sx%s+%s+%s" % (winWidth, winHeight, x, y))
+    top.resizable(0, 0)
+
+    tree1 = tkinter.ttk.Treeview(
+        top, columns=("ztm", "jzsj", "wcrs", "ywcrs", "wcbfb", "ztzt"), show="headings"
+    )
+
+    tree1.heading("ztm", text="专题名")
+    tree1.heading("jzsj", text="截止时间")
+    tree1.heading("wcrs", text="完成人数")
+    tree1.heading("ywcrs", text="应完成人数")
+    tree1.heading("wcbfb", text="完成百分比")
+    tree1.heading("ztzt", text="专题状态")
+
+    tree1.column("ztm", width=380)
+    tree1.column("jzsj", anchor="center", width=130)
+    tree1.column("wcrs", anchor="center", width=80)
+    tree1.column("ywcrs", anchor="center", width=80)
+    tree1.column("wcbfb", anchor="center", width=80)
+    tree1.column("ztzt", anchor="center", width=80)
+
+    get_all_list = teacher_get_special_list(cookie)
+
+    for all_list in get_all_list:
+        # print(all_list)
+        tree1.insert("", END, values=all_list)
+
+    def adbc(a):
+        id_list = tree1.selection()
+        for item in id_list:
+            (
+                specialname,
+                endtime,
+                completepeople,
+                shouldcompletepeople,
+                completerate,
+                specailstatus,
+            ) = tree1.item(item)["values"]
+            test11 = tree1.item(item)["values"]
+            print(tree1.item(item)["values"])
+            if test11 is None:
+                print("无法获取")
+            else:
+                print(
+                    specialname,
+                    endtime,
+                    completepeople,
+                    shouldcompletepeople,
+                    completerate,
+                    specailstatus,
+                )
+
+    # tree1.bind('<ButtonRelease-1>', adbc)
+
+    tree1.pack()
+
+    def on_closing():
+        top.destroy()
+        root.wm_deiconify()
+
+    top.protocol("WM_DELETE_WINDOW", on_closing)
+
 
 def reset_allstudents_password(student_all, teacher_cookies, num, teacher_name):
     yes_or_no = tkinter.messagebox.askokcancel('你需要了解的事','使用该功能会将所有学生账号密码修改为默认密码\n该操作将不可逆\n您是否继续进行该操作?')
@@ -850,6 +960,7 @@ def main_page(accesstoken, serverside, userid, name, plainUserId, studentorteach
             reset_allstudents_password_button.place(x=30,y=180)
             do_students_work_button.place(x=30,y=210)
             download_students_xlsx_button.place(x=30,y=240)
+            check_student_sp_button.place(x=30, y=270)
             lf_for_students.place(x=340, y=8,width=403,height=340)
             lf_for_text.place(x=745, y=8,width=353,height=340)
             logoutbutton.place(x=230,y=210)
@@ -1230,13 +1341,6 @@ def in_start():
     except Exception as e:
         tkinter.messagebox.showerror(title='失败',message='网络连接失败\n您可以通过以下操作来帮助您排除网络问题\n\n1. 如果您打开了代理（Clash,Socks), 请将它关闭.\n2.检查网络是否通畅.\n3.检查路由器等设施是否正确连接到互联网.\n4.您压根没有连接到互联网.')
         os._exit(0)
-    root.title('开始检测最新版本...')
-    try:
-        updataprogram()
-    except Exception as e:
-        root.title(title)
-        tkinter.messagebox.showerror(title='失败',message='无法检测最新版本')
-        return 0
     root.title(title)
     
 
@@ -1273,6 +1377,11 @@ loginbutton.place(x=125,y=200)
 logoutbutton = tkinter.ttk.Button(root,text="注销", command = log_out)
 do_students_work_button = tkinter.ttk.Button(root,text="完成该账号下所有学生任务", command = lambda:do_students_work(student_all, teacher_cookies, num, teacher_name))
 download_students_xlsx_button = tkinter.ttk.Button(root,text="下载所有学生账号", command = lambda:download_xlsx(teacher_cookies,classroomname))
+check_student_sp_button = tkinter.ttk.Button(
+    root,
+    text="查看专题完成状态",
+    command=lambda: treeview_teacher_get_special_list(teacher_cookies),
+)
 reset_allstudents_password_button = tkinter.ttk.Button(root,text="重置该账号下所有学生密码", command = lambda:reset_allstudents_password(student_all, teacher_cookies, num, teacher_name))
 t = scrolledtext.ScrolledText(lf_for_text, font=('Consolas', 8))	
 t.pack(fill=BOTH, expand='yes')
